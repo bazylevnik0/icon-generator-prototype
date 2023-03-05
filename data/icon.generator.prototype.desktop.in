@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=icon-generator-prototype
+Exec=icon-generator-prototype
+Icon=icon.generator.prototype
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

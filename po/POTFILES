@@ -1,0 +1,7 @@
+data/icon.generator.prototype.desktop.in
+data/icon.generator.prototype.appdata.xml.in
+data/icon.generator.prototype.gschema.xml
+src/icon_generator_prototype-window.ui
+src/main.c
+src/icon_generator_prototype-window.c
+
