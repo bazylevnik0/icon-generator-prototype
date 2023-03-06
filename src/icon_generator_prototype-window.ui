@@ -94,28 +94,31 @@
                     <property name="name">search</property>
                     <property name="title">search</property>
                     <property name="child">
-                      <object id="grid_search" class="GtkGrid">
-                        <property name="hexpand">TRUE</property>
-                        <property name="vexpand">TRUE</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <layout>
-                              <property name="column">0</property>
-                              <property name="row">0</property>
-                            </layout>
-                            <property name="label">search1</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <layout>
-                              <property name="column">0</property>
-                              <property name="row">1</property>
-                            </layout>
-                            <property name="label">search2</property>
-                          </object>
-                        </child>
-                      </object>
+
+                      <object id="scrolled_window" class="GtkScrolledWindow">
+                       <child>
+                         <object id="grid_search" class="GtkGrid">
+                           <child>
+                             <object class="GtkSearchEntry" id="search_entry">
+                              <layout>
+                                <property name="column">0</property>
+                                <property name="row">0</property>
+                              </layout>
+                              <signal name="search-changed" handler="search_text_changed"/>
+                            </object>
+                           </child>
+                           <child>
+                             <object id="grid_search_view" class="GtkGrid">
+                               <layout>
+                                <property name="column">0</property>
+                                <property name="row">1</property>
+                              </layout>
+                             </object>
+                           </child>
+                         </object>
+                      </child>
+                    </object>
+
                     </property>
                   </object>
                 </child>

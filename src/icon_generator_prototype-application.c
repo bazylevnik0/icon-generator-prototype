@@ -62,6 +62,8 @@ icon_generator_prototype_application_activate (GApplication *app)
                            "application", app,
                            NULL);
 
+
+  gtk_window_maximize (window);
   /* Ask the window manager/compositor to present the window. */
   gtk_window_present (window);
 }
