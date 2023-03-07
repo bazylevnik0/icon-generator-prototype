@@ -3,5 +3,6 @@
   <gresource prefix="/icon/generator/prototype">
     <file>icon_generator_prototype-window.ui</file>
     <file>gtk/help-overlay.ui</file>
+    <file>0.svg</file>
   </gresource>
 </gresources>

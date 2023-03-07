@@ -35,7 +35,7 @@ static void
 element_clicked (GtkWidget *widget, gchar *data)
 {
   g_print("%s\n",data);
-  widget = widget; //temporary
+  widget = widget;     //temporary
 }
 
 static void
@@ -46,11 +46,9 @@ search_text_changed (GtkSearchEntry *entry)
   GRegex *regex;
   GMatchInfo *match_info;
   regex = g_regex_new (gtk_editable_get_text(GTK_EDITABLE(entry)), G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT, NULL);
-  int direction = 1;
   GdkPixbuf* pixbuf_temp;
-  int t = 0;
   //!!!bug when searching - strange positions of some elements
-  //!!!also problem with 0 element when return to clear position of searchin, maybe use resource file for 0
+  int t = 1;
   for (int i = 1; i < elements_last_index; i++)
   {
       //delete all widgets in element_widgets and in grid_search_view(exclude 0)
@@ -67,31 +65,24 @@ search_text_changed (GtkSearchEntry *entry)
           image = gtk_image_new();
           pixbuf_temp = gdk_pixbuf_new_from_file_at_scale ( elements[i], 100, 100, TRUE, NULL );
           image = gtk_image_new_from_pixbuf ( pixbuf_temp );
-          elements_widgets[i] = gtk_button_new ();
-          gtk_button_set_child (GTK_BUTTON (elements_widgets[i]), image);
-          g_signal_connect(elements_widgets[i], "clicked", G_CALLBACK (element_clicked), elements[i]);
-          gtk_widget_set_size_request (elements_widgets[i],100,100);
-          gtk_widget_set_visible (elements_widgets[i], TRUE);
+          elements_widgets[t] = gtk_button_new ();
+          gtk_button_set_child (GTK_BUTTON (elements_widgets[t]), image);
+          g_signal_connect(elements_widgets[t], "clicked", G_CALLBACK (element_clicked), elements[t]);
+          gtk_widget_set_size_request (elements_widgets[t],100,100);
+          gtk_widget_set_visible (elements_widgets[t], TRUE);
 
-          if(t % grid_search_view_cols == 0)
+          if( (t % grid_search_view_cols) == 0)
           {
-            gtk_grid_attach_next_to (grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_BOTTOM,100,100);
-            direction *= -1;
-          } else {
-            if(direction == 1)
-            {
-              gtk_grid_attach_next_to (grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_RIGHT,100,100);
-            } else {
-              gtk_grid_attach_next_to (grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_LEFT,100,100);
-            }
+            gtk_grid_attach_next_to (grid_search_view,elements_widgets[t],elements_widgets[t-grid_search_view_cols],GTK_POS_BOTTOM,100,100);
+          } else
+          {
+            gtk_grid_attach_next_to (grid_search_view,elements_widgets[t],elements_widgets[t-1],GTK_POS_RIGHT,100,100);
           }
           t++;
       }
   }
-  direction = 1;
-  gtk_widget_set_visible (elements_widgets[0], FALSE);
 }
-//
+
 
 struct _IconGeneratorPrototypeWindow
 {
@@ -160,15 +151,14 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
   int direction = 1;
   GdkPixbuf* pixbuf_temp;
   //place 0 element(for set direction and start placement for others)
-  image = gtk_image_new();
-  pixbuf_temp = gdk_pixbuf_new_from_file_at_scale ( elements[0], 100, 100, TRUE, NULL );
-  image = gtk_image_new_from_pixbuf ( pixbuf_temp );
+  image = gtk_image_new_from_resource ("/icon/generator/prototype/0.svg");
   elements_widgets[0] = gtk_button_new ();
   gtk_button_set_child (GTK_BUTTON (elements_widgets[0]), image);
-  g_signal_connect(elements_widgets[0], "clicked", G_CALLBACK (element_clicked), elements[0]);
+  g_signal_connect(elements_widgets[0], "clicked", G_CALLBACK (element_clicked), "0");
   gtk_widget_set_size_request (elements_widgets[0],100,100);
   gtk_grid_attach ( self->grid_search_view,elements_widgets[0],0,1,100,100);
   //place others
+  int j = 0;
   for(int i = 1; i < elements_last_index; i++)
   {
       image = gtk_image_new();
@@ -179,17 +169,13 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
       g_signal_connect(elements_widgets[i], "clicked", G_CALLBACK (element_clicked), elements[i]);
       if(i % grid_search_view_cols==0)
       {
-        gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_BOTTOM,100,100);
-        direction *= -1;
+        j = i - grid_search_view_cols;
+        gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[j],GTK_POS_BOTTOM,100,100);
       } else
       {
-        if (direction == 1) {
-          gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_RIGHT,100,100);
-        }
-        if (direction == -1) {
-          gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_LEFT,100,100);
-        }
+        gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_RIGHT,100,100);
       }
+
     gtk_widget_set_size_request (elements_widgets[i],100,100);
     gtk_widget_set_visible (elements_widgets[i], TRUE);
   }
