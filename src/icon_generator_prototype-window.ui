@@ -82,8 +82,7 @@
                     <property name="name">draw</property>
                     <property name="title">draw</property>
                     <property name="child">
-                      <object class="GtkLabel">
-                        <property name="label">draw</property>
+                      <object class="GtkImage" id="draw_image">
                       </object>
                     </property>
                   </object>

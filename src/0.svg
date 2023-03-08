@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="100"
-   height="100"
-   viewBox="0 0 26.458333 26.458333"
+   width="128"
+   height="128"
+   viewBox="0 0 33.866666 33.866666"
    version="1.1"
    id="svg5"
    inkscape:version="1.2.2 (732a01da63, 2022-12-09, custom)"
@@ -24,9 +24,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="6.2491112"
-     inkscape:cx="90.57288"
-     inkscape:cy="54.00768"
+     inkscape:zoom="0.70199214"
+     inkscape:cx="397.44035"
+     inkscape:cy="561.9721"
      inkscape:window-width="1920"
      inkscape:window-height="1016"
      inkscape:window-x="0"
@@ -34,28 +34,9 @@
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
-     id="defs2">
-    <rect
-       x="30.190543"
-       y="29.904878"
-       width="58.785859"
-       height="52.81001"
-       id="rect2745" />
-    <rect
-       x="15.644725"
-       y="11.9542"
-       width="71.203875"
-       height="73.216661"
-       id="rect2489" />
-  </defs>
+     id="defs2" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
-    <text
-       xml:space="preserve"
-       transform="scale(0.26458333)"
-       id="text2487"
-       style="fill:#ffffff;stroke-linecap:round;stroke-width:1.99937008;stroke:none;paint-order:stroke fill markers;white-space:pre;shape-inside:url(#rect2489)" />
-  </g>
+     id="layer1" />
 </svg>

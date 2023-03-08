@@ -30,6 +30,12 @@ GtkWidget *elements_widgets[1000];
 GtkWidget *image;
 gchar *path_library;
 gint grid_search_view_cols = 10; //also will be good calculate window size and set it dynamically
+gchar *temp;
+GFileOutputStream *gfostream;
+GFileInputStream  *gfistream;
+GFile *temp_file;
+GtkWidget *draw_image;
+GdkPixbuf* draw_gdkpixbuf;
 
 static void
 element_clicked (GtkWidget *widget, gchar *data)
@@ -83,7 +89,6 @@ search_text_changed (GtkSearchEntry *entry)
   }
 }
 
-
 struct _IconGeneratorPrototypeWindow
 {
   GtkApplicationWindow  parent_instance;
@@ -91,6 +96,7 @@ struct _IconGeneratorPrototypeWindow
   /* Template widgets */
   GtkSearchEntry      *search_entry;
   GtkGrid             *grid_search_view;
+  GtkImage            *draw_image;
 
 };
 
@@ -105,6 +111,7 @@ icon_generator_prototype_window_class_init (IconGeneratorPrototypeWindowClass *k
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, search_entry);
   gtk_widget_class_bind_template_callback (widget_class, search_text_changed);
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, grid_search_view);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, draw_image);
 }
 
 static void
@@ -148,7 +155,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 
   //show in grid_search_view
   gtk_grid_insert_row (self->grid_search_view,1);
-  int direction = 1;
   GdkPixbuf* pixbuf_temp;
   //place 0 element(for set direction and start placement for others)
   image = gtk_image_new_from_resource ("/icon/generator/prototype/0.svg");
@@ -158,7 +164,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
   gtk_widget_set_size_request (elements_widgets[0],100,100);
   gtk_grid_attach ( self->grid_search_view,elements_widgets[0],0,1,100,100);
   //place others
-  int j = 0;
   for(int i = 1; i < elements_last_index; i++)
   {
       image = gtk_image_new();
@@ -169,8 +174,7 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
       g_signal_connect(elements_widgets[i], "clicked", G_CALLBACK (element_clicked), elements[i]);
       if(i % grid_search_view_cols==0)
       {
-        j = i - grid_search_view_cols;
-        gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[j],GTK_POS_BOTTOM,100,100);
+        gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-grid_search_view_cols],GTK_POS_BOTTOM,100,100);
       } else
       {
         gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_RIGHT,100,100);
@@ -179,4 +183,67 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
     gtk_widget_set_size_request (elements_widgets[i],100,100);
     gtk_widget_set_visible (elements_widgets[i], TRUE);
   }
+
+
+
+  //store temp element in /tmp(for working with svg content like a with text file)
+  //create
+  temp = g_strconcat("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n",
+"<!-- Created with Inkscape (http://www.inkscape.org/) -->\n",
+"<svg\n",
+"   width=\"128\"\n",
+"   height=\"128\"\n",
+"   viewBox=\"0 0 33.866666 33.866666\"\n",
+"   version=\"1.1\"\n",
+"   id=\"svg5\"\n",
+"   inkscape:version=\"1.2.2 (732a01da63, 2022-12-09, custom)\"\n",
+"   sodipodi:docname=\"0.svg\"\n",
+"   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n",
+"   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n",
+"   xmlns=\"http://www.w3.org/2000/svg\"\n",
+"   xmlns:svg=\"http://www.w3.org/2000/svg\">\n",
+"  <sodipodi:namedview\n",
+"     id=\"namedview7\"\n",
+"     pagecolor=\"#ffffff\"\n",
+"     bordercolor=\"#000000\"\n",
+"     borderopacity=\"0.25\"\n",
+"     inkscape:showpageshadow=\"2\"\n",
+"     inkscape:pageopacity=\"0.0\"\n",
+"     inkscape:pagecheckerboard=\"0\"\n",
+"     inkscape:deskcolor=\"#d1d1d1\"\n",
+"     inkscape:document-units=\"mm\"\n",
+"     showgrid=\"false\"\n",
+"     inkscape:zoom=\"0.70199214\"\n",
+"     inkscape:cx=\"397.44035\"\n",
+"     inkscape:cy=\"561.9721\"\n",
+"     inkscape:window-width=\"1920\"\n",
+"     inkscape:window-height=\"1016\"\n",
+"     inkscape:window-x=\"0\"\n",
+"     inkscape:window-y=\"0\"\n",
+"     inkscape:window-maximized=\"1\"\n",
+"     inkscape:current-layer=\"layer1\" />\n",
+"  <defs\n",
+"     id=\"defs2\" />\n",
+"  <g\n",
+"     inkscape:label=\"Layer 1\"\n",
+"     inkscape:groupmode=\"layer\"\n",
+"     id=\"layer1\">\n",
+"    <text\n",
+"       xml:space=\"preserve\"\n",
+"       transform=\"matrix(0.26458333,0,0,0.26458333,5.5401104,4.8437908)\"\n",
+"       id=\"text234\"\n",
+"       style=\"font-size:64px;white-space:pre;shape-inside:url(#rect236);display:inline;fill:#000000;stroke-width:3.77953\"><tspan\n",
+"         x=\"32.619141\"\n",
+"         y=\"82.716797\"\n",
+"         id=\"tspan367\">1</tspan></text>\n",
+"   </g> \n",
+"</svg>\n",NULL);
+
+  //store
+  temp_file = g_file_new_for_path (g_strconcat(path_library,"temp.svg",NULL));
+  gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
+  //gfistream = g_file_read (temp_file, NULL, NULL);
+  g_output_stream_write (gfostream, temp,g_utf8_strlen (temp,-1), NULL, NULL);
+  gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"temp.svg",NULL));
+
 }
