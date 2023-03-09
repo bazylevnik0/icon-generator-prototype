@@ -19,8 +19,6 @@
 #include "icon_generator_prototype-config.h"
 #include "icon_generator_prototype-window.h"
 #include <sys/stat.h>  //for creating temp folder
-#include <sys/types.h> //for creating temp folder
-
 
 //functional for search_entry and grid_search_view
 GtkGrid             *grid_search_view_temp;
@@ -35,12 +33,10 @@ gchar *path_library;
 gint grid_search_view_cols = 10; //also will be good calculate window size and set it dynamically
 gchar *temp;
 gint temp_size;
-GFileOutputStream *gfostream;
-GFileInputStream  *gfistream;
 GFile *temp_file;
-gchar *temp_work_elements[10];   //choosen for work elements
+gchar *temp_work_elements[8];   //choosen for work elements
 GtkWidget *temp_work_elements_widgets[10];
-GtkWidget *draw_image;
+GtkImage *draw_image;
 GdkPixbuf* draw_gdkpixbuf;
 GtkBox *control_box;
 
@@ -54,13 +50,90 @@ element_clicked (GtkWidget *widget, gchar *data)
   {
     i++;
   }
+  //if in temp_work_elements enough space
   if(i<(sizeof(temp_work_elements)/sizeof(temp_work_elements[i])-1))
   {
+    //add to temp_work_element
     temp_work_elements[i] = data;
     //add to work_element to control_box
     temp_work_elements_widgets[i] = gtk_button_new ();
     gtk_button_set_label (GTK_BUTTON(temp_work_elements_widgets[i]),data);
+    //temp here must be handle click for choose element and maybe double-click for delete element from control_box and from draw
+    //add to control_box
     gtk_box_append (control_box, temp_work_elements_widgets[i]);
+    //add to draw
+    //
+    //1)copy to temp_buffer search "<g" in temp_buffer and "</g>"
+    GFile *temp_buffer_file = g_file_new_for_path (data);
+    GFileInputStream *temp_buffer_istream = g_file_read (temp_buffer_file, NULL, NULL);
+    gchar temp_buffer[10000];
+    g_input_stream_read (temp_buffer_istream, temp_buffer, 10000, NULL, NULL);
+    //g_input_stream_close (temp_buffer_istream,NULL,NULL);
+
+    //ye it hardcoded, but for inkscape must work for simple elements, if app continue growth
+    //it must be changet to something like analyze text, analyze tool,layers,etc
+    //
+    //temp - when i > 0 must be something like a find <g and repeat find <g i loops
+    if(i == 0)
+    {
+    int j = 0;
+           //search "<g"
+    while ( !((temp_buffer[j] =='<') && (temp_buffer[j+1] == 'g')) )
+    {
+      j++;
+    }
+    int k = j;
+           //search "</g>"
+    while ( !((temp_buffer[k] =='<') && (temp_buffer[k+1] == '/') && (temp_buffer[k+2] =='g') && (temp_buffer[k+3] == '>') ) )
+    {
+      k++;
+    }
+    k+=3;//move to ">" last symbol
+    //reduce temp_buffer
+    int l;
+    for( l = 0; l <= k - j; l++)
+    {
+      temp_buffer[l] = temp_buffer[j+l];
+    }
+    temp_buffer[l] = '\0';
+    //2)find "Layer n" in temp_buffer and change to "Layer (position in temp_work_elements+1)"
+    k = 0;
+    while ( !((temp_buffer[k] =='L') && (temp_buffer[k+1] == 'a') && (temp_buffer[k+2] =='y') && (temp_buffer[k+3] == 'e') && (temp_buffer[k+4] == 'r') ) )
+    {
+      k++;
+    }
+    char layer[2];
+    sprintf(layer,"%d",i+2);
+    temp_buffer[k+6] = layer[0];
+    k = 0;
+    while ( !((temp_buffer[k] =='i') && (temp_buffer[k+1] == 'd') && (temp_buffer[k+2] =='=') ) )
+    {
+      k++;
+    }
+    temp_buffer[k+9] = layer[0];
+
+    //3)search "</g>" in temp and paste to temp + add </svg>
+    k = 0;
+      //search "</g>"
+    while ( !((temp[k] =='<') && (temp[k+1] == '/') && (temp[k+2] =='g') && (temp[k+3] == '>') ) )
+    {
+      k++;
+    }
+    k+=3;//move to ">" last symbol
+    temp[k+1]='\0';
+    temp = g_strconcat(temp,"\n   ",temp_buffer,"\n</svg>",NULL);
+
+     //call redraw
+     temp_size = g_utf8_strlen (temp,-1);
+     g_print("%d %s",temp_size,temp);
+
+     temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
+     //GFileOutputStream *gfostream = g_file_replace (temp_file,NULL,FALSE,G_FILE_CREATE_NONE,NULL,NULL);
+     GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+     GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+     g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+     gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+    }
   }
 }
 
@@ -263,11 +336,13 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 
   temp_size = g_utf8_strlen (temp,-1);
 
+  draw_image = self->draw_image;
   //store
   mkdir(g_strconcat(path_library,"/output",NULL), 0777);
   temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
-  gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
-  gfistream = g_file_read (temp_file, NULL, NULL);
+
+  GFileOutputStream *gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
+  //GFileInputStream  *gfistream = g_file_read (temp_file, NULL, NULL);
   g_output_stream_write (gfostream, temp, temp_size, NULL, NULL);
   gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   //g_input_stream_read (gfistream, temp, temp_size, NULL, NULL);
