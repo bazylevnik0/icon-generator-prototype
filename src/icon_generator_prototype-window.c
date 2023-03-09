@@ -18,30 +18,50 @@
 
 #include "icon_generator_prototype-config.h"
 #include "icon_generator_prototype-window.h"
+#include <sys/stat.h>  //for creating temp folder
+#include <sys/types.h> //for creating temp folder
+
 
 //functional for search_entry and grid_search_view
 GtkGrid             *grid_search_view_temp;
                //maybe possible use dynamic string of chars i mean store paths not like a array but as a long string
                //but in below... app is using last_element and not works with empty elements
-char *elements[1000];
-char *elements_temp[1000];
+gchar *elements[1000];
+gchar *elements_temp[1000];
 gint  elements_last_index = 0;
 GtkWidget *elements_widgets[1000];
 GtkWidget *image;
 gchar *path_library;
 gint grid_search_view_cols = 10; //also will be good calculate window size and set it dynamically
 gchar *temp;
+gint temp_size;
 GFileOutputStream *gfostream;
 GFileInputStream  *gfistream;
 GFile *temp_file;
+gchar *temp_work_elements[10];   //choosen for work elements
+GtkWidget *temp_work_elements_widgets[10];
 GtkWidget *draw_image;
 GdkPixbuf* draw_gdkpixbuf;
+GtkBox *control_box;
 
 static void
 element_clicked (GtkWidget *widget, gchar *data)
 {
   g_print("%s\n",data);
   widget = widget;     //temporary
+  int i = 0;
+  while(g_strcmp0 (temp_work_elements[i],"0"))
+  {
+    i++;
+  }
+  if(i<(sizeof(temp_work_elements)/sizeof(temp_work_elements[i])-1))
+  {
+    temp_work_elements[i] = data;
+    //add to work_element to control_box
+    temp_work_elements_widgets[i] = gtk_button_new ();
+    gtk_button_set_label (GTK_BUTTON(temp_work_elements_widgets[i]),data);
+    gtk_box_append (control_box, temp_work_elements_widgets[i]);
+  }
 }
 
 static void
@@ -97,6 +117,7 @@ struct _IconGeneratorPrototypeWindow
   GtkSearchEntry      *search_entry;
   GtkGrid             *grid_search_view;
   GtkImage            *draw_image;
+  GtkBox              *control_box;
 
 };
 
@@ -112,6 +133,7 @@ icon_generator_prototype_window_class_init (IconGeneratorPrototypeWindowClass *k
   gtk_widget_class_bind_template_callback (widget_class, search_text_changed);
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, grid_search_view);
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, draw_image);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, control_box);
 }
 
 static void
@@ -239,11 +261,22 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 "   </g> \n",
 "</svg>\n",NULL);
 
-  //store
-  temp_file = g_file_new_for_path (g_strconcat(path_library,"temp.svg",NULL));
-  gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
-  //gfistream = g_file_read (temp_file, NULL, NULL);
-  g_output_stream_write (gfostream, temp,g_utf8_strlen (temp,-1), NULL, NULL);
-  gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"temp.svg",NULL));
+  temp_size = g_utf8_strlen (temp,-1);
 
+  //store
+  mkdir(g_strconcat(path_library,"/output",NULL), 0777);
+  temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
+  gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
+  gfistream = g_file_read (temp_file, NULL, NULL);
+  g_output_stream_write (gfostream, temp, temp_size, NULL, NULL);
+  gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+  //g_input_stream_read (gfistream, temp, temp_size, NULL, NULL);
+
+  //fill temp_work_elements with "0"
+  for(int i = 0; i < 10; i++)
+  {
+    temp_work_elements[i] = "0";
+  }
+
+  control_box = self->control_box;
 }

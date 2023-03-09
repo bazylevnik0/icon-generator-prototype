@@ -18,19 +18,17 @@
                 <property name="column">0</property>
                 <property name="row">0</property>
               </layout>
+
               <child>
-                <object class="GtkLabel" id="label11">
+                <object class="GtkBox" id="control_box">
                   <layout>
                     <property name="column">0</property>
                     <property name="row">0</property>
                   </layout>
-                  <property name="label">11</property>
-                  <attributes>
-                    <attribute name="weight" value="bold"/>
-                    <attribute name="scale" value="2"/>
-                  </attributes>
+                  <property name="orientation">vertical</property>
                 </object>
               </child>
+
               <child>
                 <object class="GtkLabel" id="label12">
                   <layout>
