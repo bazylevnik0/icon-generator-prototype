@@ -34,7 +34,7 @@ gint grid_search_view_cols = 10; //also will be good calculate window size and s
 gchar *temp;
 gint temp_size;
 GFile *temp_file;
-gchar *temp_work_elements[8];   //choosen for work elements
+gchar *temp_work_elements[9];   //choosen for work elements
 GtkWidget *temp_work_elements_widgets[10];
 GtkImage *draw_image;
 GdkPixbuf* draw_gdkpixbuf;
@@ -45,6 +45,7 @@ element_clicked (GtkWidget *widget, gchar *data)
 {
   g_print("%s\n",data);
   widget = widget;     //temporary
+
   int i = 0;
   while(g_strcmp0 (temp_work_elements[i],"0"))
   {
@@ -74,8 +75,6 @@ element_clicked (GtkWidget *widget, gchar *data)
     //it must be changet to something like analyze text, analyze tool,layers,etc
     //
     //temp - when i > 0 must be something like a find <g and repeat find <g i loops
-    if(i == 0)
-    {
     int j = 0;
            //search "<g"
     while ( !((temp_buffer[j] =='<') && (temp_buffer[j+1] == 'g')) )
@@ -112,11 +111,16 @@ element_clicked (GtkWidget *widget, gchar *data)
     }
     temp_buffer[k+9] = layer[0];
 
-    //3)search "</g>" in temp and paste to temp + add </svg>
+    //3)search last "</g>" in temp and paste to temp + add </svg>
+    //read temp again
     k = 0;
-      //search "</g>"
-    while ( !((temp[k] =='<') && (temp[k+1] == '/') && (temp[k+2] =='g') && (temp[k+3] == '>') ) )
+    for(int l = i; l >= 0; l--)
     {
+      //search "</g>"
+      while ( !((temp[k] =='<') && (temp[k+1] == '/') && (temp[k+2] =='g') && (temp[k+3] == '>') ) )
+      {
+        k++;
+      }
       k++;
     }
     k+=3;//move to ">" last symbol
@@ -127,13 +131,11 @@ element_clicked (GtkWidget *widget, gchar *data)
      temp_size = g_utf8_strlen (temp,-1);
      g_print("%d %s",temp_size,temp);
 
-     temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
-     //GFileOutputStream *gfostream = g_file_replace (temp_file,NULL,FALSE,G_FILE_CREATE_NONE,NULL,NULL);
      GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
      GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
      g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
      gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
-    }
+
   }
 }
 
