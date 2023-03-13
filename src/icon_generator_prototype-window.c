@@ -43,6 +43,38 @@ GdkPixbuf* draw_gdkpixbuf;
 GtkBox *control_box;
 
 static void
+change_spin_button_x (GtkWidget *widget, GtkAdjustment *data)
+{
+  gint t = gtk_adjustment_get_value(data);
+  g_print("%d\n",t);
+}
+static void
+change_spin_button_y (GtkWidget *widget, GtkAdjustment *data)
+{
+  gint t = gtk_adjustment_get_value(data);
+  g_print("%d\n",t);
+}
+static void
+change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
+{
+  gint t = gtk_adjustment_get_value(data);
+  g_print("%d\n",t);
+}
+static void
+change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
+{
+  gint t = gtk_adjustment_get_value(data);
+  g_print("%d\n",t);
+}
+static void
+click_button_grid (GtkWidget *widget)
+{
+  g_print("#\n");
+}
+
+
+
+static void
 work_element_clicked (GtkWidget *widget, gint data)
 {
   temp_working_element = data;
@@ -201,7 +233,15 @@ struct _IconGeneratorPrototypeWindow
   GtkGrid             *grid_search_view;
   GtkImage            *draw_image;
   GtkBox              *control_box;
-
+  GtkSpinButton       *spin_button_x;
+  GtkSpinButton       *spin_button_y;
+  GtkAdjustment       *spinx;
+  GtkAdjustment       *spiny;
+  GtkScale            *scale_rotate;
+  GtkScale            *scale_scale;
+  GtkAdjustment       *scalerotate;
+  GtkAdjustment       *scalescale;
+  GtkButton           *button_grid;
 };
 
 G_DEFINE_TYPE (IconGeneratorPrototypeWindow, icon_generator_prototype_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -217,6 +257,15 @@ icon_generator_prototype_window_class_init (IconGeneratorPrototypeWindowClass *k
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, grid_search_view);
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, draw_image);
   gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, control_box);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, spin_button_x);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, spin_button_y);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, spinx);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, spiny);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, scale_scale);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, scale_rotate);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, scalescale);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, scalerotate);
+  gtk_widget_class_bind_template_child    (widget_class, IconGeneratorPrototypeWindow, button_grid);
 }
 
 static void
@@ -364,4 +413,12 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
   }
 
   control_box = self->control_box;
+
+
+  //set handlers for control
+  g_signal_connect (self->spin_button_x, "value-changed", G_CALLBACK (change_spin_button_x), self->spinx);
+  g_signal_connect (self->spin_button_y, "value-changed", G_CALLBACK (change_spin_button_y), self->spiny);
+  g_signal_connect (self->scale_rotate , "value-changed", G_CALLBACK (change_scale_rotate) , self->scalerotate);
+  g_signal_connect (self->scale_scale  , "value-changed", G_CALLBACK (change_scale_scale)  , self->scalescale);
+  g_signal_connect (self->button_grid  , "clicked", G_CALLBACK (click_button_grid), NULL);
 }

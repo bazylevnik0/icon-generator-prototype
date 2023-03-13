@@ -57,6 +57,7 @@
                           </child>
                           <child>
                            <object class="GtkSpinButton" id="spin_button_x">
+                             <property name="adjustment">spinx</property>
                              <layout>
                               <property name="column">0</property>
                               <property name="row">1</property>
@@ -83,6 +84,7 @@
                           </child>
                           <child>
                            <object class="GtkSpinButton" id="spin_button_y">
+                             <property name="adjustment">spiny</property>
                              <layout>
                               <property name="column">0</property>
                               <property name="row">1</property>
@@ -218,6 +220,20 @@
       </object>
     </child>
   </template>
+<object class="GtkAdjustment" id="spinx">
+    <property name="lower">0</property>
+    <property name="upper">128</property>
+    <property name="value">0</property>
+    <property name="step-increment">1</property>
+  </object>
+
+<object class="GtkAdjustment" id="spiny">
+    <property name="lower">0</property>
+    <property name="upper">128</property>
+    <property name="value">0</property>
+    <property name="step-increment">1</property>
+  </object>
+
 <object class="GtkAdjustment" id="scalerotate">
     <property name="lower">-25</property>
     <property name="upper">25</property>
