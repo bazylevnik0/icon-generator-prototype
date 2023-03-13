@@ -35,15 +35,23 @@ gchar *temp;
 gint temp_size;
 GFile *temp_file;
 gchar *temp_work_elements[9];   //choosen for work elements
+
 GtkWidget *temp_work_elements_widgets[10];
+gint temp_working_element = 0;
 GtkImage *draw_image;
 GdkPixbuf* draw_gdkpixbuf;
 GtkBox *control_box;
 
 static void
+work_element_clicked (GtkWidget *widget, gint data)
+{
+  temp_working_element = data;
+  g_print("%d\n", temp_working_element);
+}
+
+static void
 element_clicked (GtkWidget *widget, gchar *data)
 {
-  g_print("%s\n",data);
   widget = widget;     //temporary
 
   int i = 0;
@@ -59,7 +67,9 @@ element_clicked (GtkWidget *widget, gchar *data)
     //add to work_element to control_box
     temp_work_elements_widgets[i] = gtk_button_new ();
     gtk_button_set_label (GTK_BUTTON(temp_work_elements_widgets[i]),data);
-    //temp here must be handle click for choose element and maybe double-click for delete element from control_box and from draw
+                                                                                                //real id of layer(temp_work_element) in workint temp_file
+                                                                                                //see below
+    g_signal_connect(temp_work_elements_widgets[i], "clicked", G_CALLBACK (work_element_clicked), i+2);
     //add to control_box
     gtk_box_append (control_box, temp_work_elements_widgets[i]);
     //add to draw
@@ -129,13 +139,11 @@ element_clicked (GtkWidget *widget, gchar *data)
 
      //call redraw
      temp_size = g_utf8_strlen (temp,-1);
-     g_print("%d %s",temp_size,temp);
 
      GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
      GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
      g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
      gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
-
   }
 }
 

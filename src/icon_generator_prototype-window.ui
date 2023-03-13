@@ -13,7 +13,6 @@
             <child>
             <object id="grid_control" class="GtkGrid">
               <property name="hexpand">TRUE</property>
-              <property name="vexpand">TRUE</property>
               <layout>
                 <property name="column">0</property>
                 <property name="row">0</property>
@@ -30,17 +29,106 @@
               </child>
 
               <child>
-                <object class="GtkLabel" id="label12">
+                <object class="GtkBox" id="control_edit_box">
                   <layout>
                     <property name="column">0</property>
                     <property name="row">1</property>
                   </layout>
-                  <property name="label">12</property>
-                  <attributes>
-                    <attribute name="weight" value="bold"/>
-                    <attribute name="scale" value="2"/>
-                  </attributes>
-                </object>
+                  <property name="orientation">vertical</property>
+
+                  <child>
+                     <object id="grid_edit_position" class="GtkGrid">
+                      <property name="hexpand">TRUE</property>
+
+                       <child>
+                         <object id="grid_spin_button_x" class="GtkGrid">
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">0</property>
+                            </layout>
+                           <child>
+                               <object class="GtkLabel">
+                                  <property name="label" translatable="yes">x:</property>
+                                  <layout>
+                                    <property name="column">0</property>
+                                    <property name="row">0</property>
+                                  </layout>
+                               </object>
+                          </child>
+                          <child>
+                           <object class="GtkSpinButton" id="spin_button_x">
+                             <layout>
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                             </layout>
+                           </object>
+                          </child>
+                         </object>
+                       </child>
+
+                       <child>
+                         <object id="grid_spin_button_y" class="GtkGrid">
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">0</property>
+                            </layout>
+                           <child>
+                               <object class="GtkLabel">
+                                  <property name="label">y:</property>
+                                  <layout>
+                                    <property name="column">0</property>
+                                    <property name="row">0</property>
+                                  </layout>
+                               </object>
+                          </child>
+                          <child>
+                           <object class="GtkSpinButton" id="spin_button_y">
+                             <layout>
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                             </layout>
+                           </object>
+                          </child>
+                         </object>
+                       </child>
+
+                     </object>
+                  </child>
+
+                 <child>
+                      <object class="GtkLabel">
+                        <property name="label">Rotate:</property>
+                      </object>
+                 </child>
+
+                 <child>
+                     <object class="GtkScale" id="scale_rotate">
+                          <property name="orientation">horizontal</property>
+                          <property name="adjustment">scalerotate</property>
+                      </object>
+                 </child>
+
+                 <child>
+                      <object class="GtkLabel">
+                        <property name="label">Scale:</property>
+                      </object>
+                 </child>
+
+                 <child>
+                     <object class="GtkScale" id="scale_scale">
+                          <property name="orientation">horizontal</property>
+                          <property name="adjustment">scalescale</property>
+                      </object>
+                 </child>
+
+                  <child>
+                        <object id="button_grid" class="GtkButton">
+                            <property name="label">#</property>
+                        </object>
+                    </child>
+
+
+                 </object>
               </child>
 
           </object>
@@ -130,5 +218,18 @@
       </object>
     </child>
   </template>
+<object class="GtkAdjustment" id="scalerotate">
+    <property name="lower">-25</property>
+    <property name="upper">25</property>
+    <property name="value">0</property>
+    <property name="step-increment">1</property>
+  </object>
+
+<object class="GtkAdjustment" id="scalescale">
+    <property name="lower">-25</property>
+    <property name="upper">25</property>
+    <property name="value">0</property>
+    <property name="step-increment">1</property>
+  </object>
 
 </interface>
