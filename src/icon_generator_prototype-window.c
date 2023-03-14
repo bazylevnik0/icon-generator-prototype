@@ -45,9 +45,106 @@ GtkBox *control_box;
 static void
 change_spin_button_x (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+  if(temp_working_element!=0)
+  {
+    //search in temp "Layer [temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
+    {
+      i++;
+    }
+    g_print("%c\n",temp[i+6]);
+    //search end of layer
+    int k = i;
+    while ( !((temp[k] =='g') && (temp[k+1] == '>')) )
+    {
+      k++;
+    }
+    //work with all element in layer
+    while(i<=k)
+    {
+      //find each x=
+      while ( !((temp[i] =='x') && (temp[i+1] == '=')) && i < k)
+      {
+        i++;
+      }
+
+      if( (temp[i] =='x') && (temp[i+1] == '=') )
+      {
+        g_print("%s\n","i found x");
+
+        //move to current value
+        i+=3;
+        //find end of the current value
+        int j = i;
+        for(;temp[j]!='"';j++){}
+        //convert current value to int and change to new_x
+        gchar x_cur_char[20];
+        int m = 0;
+        for(int l=i;l<j;l++)
+        {
+          x_cur_char[m] = temp[l];
+          m++;
+        }
+        x_cur_char[m]='\0';
+
+        g_print("%s\n",x_cur_char); //must output current value
+      }
+
+      i++;
+    }
+  }
+     /*
+    //change x= new_x
+    if( (temp[i] =='x') && (temp[i+1] == '=') )
+    {
+      //move to current value
+      i+=3;
+      //find end of the current value
+      int j = i;
+      for(;temp[j]=='"';j++){}
+      //convert current value to int and change to new_x
+      gchar x_cur_char[20];
+      int m = 0;
+      for(int l=i;l<=j;l++)
+      {
+        x_cur_char[m] = temp[l];
+        m++;
+      }
+      x_cur_char[m]='\0';
+
+      g_print("%s\n",x_cur_char); //must output current value
+      */
+
+
+      //get x from adjustment
+      //gint x_shift = gtk_adjustment_get_value(data);
+      //we need store original
+
+      //char *temp_start;
+      //memmove(temp_start,temp,);
+      //char *temp_end;
+      //memmove(temp,temp+i,//n-byte);
+      //memmove(temp_end,temp,//n-byte);
+
+
+  //transform temp
+  //
+  //copy [0,i]to temp_buffer
+  //move memory to start
+  //create string with changes
+  //g_strconcat all strings to temp
+
+
+  //search near x
+  //read x
+  //change x
+  //rewrite file
+  //update draw
 }
+
 static void
 change_spin_button_y (GtkWidget *widget, GtkAdjustment *data)
 {
