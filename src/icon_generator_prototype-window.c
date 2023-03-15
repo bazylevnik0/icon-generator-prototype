@@ -21,30 +21,40 @@
 #include <sys/stat.h>  //for creating temp folder
 
 //functional for search_entry and grid_search_view
-GtkGrid             *grid_search_view_temp;
+GtkGrid   *grid_search_view_temp;
                //maybe possible use dynamic string of chars i mean store paths not like a array but as a long string
                //but in below... app is using last_element and not works with empty elements
-gchar *elements[1000];
-gchar *elements_temp[1000];
-gint  elements_last_index = 0;
+gchar     *elements[1000];
+gchar     *elements_temp[1000];
+gint       elements_last_index = 0;
 GtkWidget *elements_widgets[1000];
 GtkWidget *image;
-gchar *path_library;
-gint grid_search_view_cols = 10; //also will be good calculate window size and set it dynamically
-gchar *temp;
-gint temp_size;
-GFile *temp_file;
-gchar *temp_work_elements[9];   //choosen for work elements
+gchar     *path_library;
+gint       grid_search_view_cols = 10; //also will be good calculate window size and set it dynamically
+gchar     *temp;
+gint       temp_size;
+GFile     *temp_file;
+gchar     *temp_work_elements[9];   //choosen for work elements
 
 GtkWidget *temp_work_elements_widgets[10];
-gint temp_working_element = 0;
-GtkImage *draw_image;
-GdkPixbuf* draw_gdkpixbuf;
-GtkBox *control_box;
+gint       temp_working_element = 0;
+GtkImage  *draw_image;
+GdkPixbuf *draw_gdkpixbuf;
+GtkBox    *control_box;
+
+GtkSpinButton       *spin_button_x;
+GtkSpinButton       *spin_button_y;
 
 static void
 change_spin_button_x (GtkWidget *widget, GtkAdjustment *data)
 {
+  //                                          //
+  //                                          //
+  //!temporary - only for one-level elements  //
+  //                                          //
+  //                                          //
+  gint new_x = gtk_adjustment_get_value(data);
+
   if(temp_working_element!=0)
   {
     //search in temp "Layer [temp_working_element]"
@@ -58,98 +68,131 @@ change_spin_button_x (GtkWidget *widget, GtkAdjustment *data)
     g_print("%c\n",temp[i+6]);
     //search end of layer
     int k = i;
-    while ( !((temp[k] =='g') && (temp[k+1] == '>')) )
+    while ( !((temp[k] =='<') && (temp[k+1] =='/') && (temp[k+2] =='s') && (temp[k+3] =='v') && (temp[k+4] == 'g') && (temp[k+5] == '>')) )
     {
       k++;
     }
+    k+=6;
     //work with all element in layer
     while(i<=k)
     {
-      //find each x=
-      while ( !((temp[i] =='x') && (temp[i+1] == '=')) && i < k)
-      {
-        i++;
-      }
-
       if( (temp[i] =='x') && (temp[i+1] == '=') )
       {
-        g_print("%s\n","i found x");
-
         //move to current value
         i+=3;
         //find end of the current value
         int j = i;
         for(;temp[j]!='"';j++){}
-        //convert current value to int and change to new_x
-        gchar x_cur_char[20];
-        int m = 0;
-        for(int l=i;l<j;l++)
-        {
-          x_cur_char[m] = temp[l];
-          m++;
-        }
-        x_cur_char[m]='\0';
+        //change in file
+        //
+        //table of current points:
+        //i - start point of changes
+        //j - end   point of changes
+        //k - end   point of file(not sure about EOF,maybe we must set it)
+        //
+        //move to buffer_start from start to i
+        gchar buffer_start[i+1];
+        memmove(buffer_start,temp,i*sizeof(temp[0]));
+        buffer_start[i] = '\0';
+        //orginise buffer_change
+        gchar buffer_change[j-i+1];
+        sprintf(buffer_change,"%d",new_x);
+        //move to buffer_end from j to k
+        gchar buffer_end[k-j+1];
+        memmove(buffer_end,temp+j*sizeof(temp[0]),k-j);
+        buffer_end[k-j] = '\0';
+        //concat them in temp
+        gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+        g_print("%s",temp_buffer);
+        temp_size = g_utf8_strlen (temp_buffer,-1);
+        g_strlcpy (temp,temp_buffer,temp_size+1);
 
-        g_print("%s\n",x_cur_char); //must output current value
+        //rewrite and redraw
+        temp_size++; //fix last symbol when we copy from temp_buffer - i don't really know why
+
+        GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+        GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+        g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+        gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
       }
-
       i++;
     }
   }
-     /*
-    //change x= new_x
-    if( (temp[i] =='x') && (temp[i+1] == '=') )
-    {
-      //move to current value
-      i+=3;
-      //find end of the current value
-      int j = i;
-      for(;temp[j]=='"';j++){}
-      //convert current value to int and change to new_x
-      gchar x_cur_char[20];
-      int m = 0;
-      for(int l=i;l<=j;l++)
-      {
-        x_cur_char[m] = temp[l];
-        m++;
-      }
-      x_cur_char[m]='\0';
-
-      g_print("%s\n",x_cur_char); //must output current value
-      */
-
-
-      //get x from adjustment
-      //gint x_shift = gtk_adjustment_get_value(data);
-      //we need store original
-
-      //char *temp_start;
-      //memmove(temp_start,temp,);
-      //char *temp_end;
-      //memmove(temp,temp+i,//n-byte);
-      //memmove(temp_end,temp,//n-byte);
-
-
-  //transform temp
-  //
-  //copy [0,i]to temp_buffer
-  //move memory to start
-  //create string with changes
-  //g_strconcat all strings to temp
-
-
-  //search near x
-  //read x
-  //change x
-  //rewrite file
-  //update draw
 }
 
 static void
 change_spin_button_y (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+  //                                          //
+  //                                          //
+  //!temporary - only for one-level elements  //
+  //                                          //
+  //                                          //
+  gint new_y = gtk_adjustment_get_value(data);
+
+  if(temp_working_element!=0)
+  {
+    //search in temp "Layer [temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
+    {
+      i++;
+    }
+    g_print("%c\n",temp[i+6]);
+    //search end of layer
+    int k = i;
+    while ( !((temp[k] =='<') && (temp[k+1] =='/') && (temp[k+2] =='s') && (temp[k+3] =='v') && (temp[k+4] == 'g') && (temp[k+5] == '>')) )
+    {
+      k++;
+    }
+    k+=6;
+    //work with all element in layer
+    while(i<=k)
+    {
+      if( (temp[i] =='y') && (temp[i+1] == '=') )
+      {
+        //move to current value
+        i+=3;
+        //find end of the current value
+        int j = i;
+        for(;temp[j]!='"';j++){}
+        //change in file
+        //
+        //table of current points:
+        //i - start point of changes
+        //j - end   point of changes
+        //k - end   point of file(not sure about EOF,maybe we must set it)
+        //
+        //move to buffer_start from start to i
+        gchar buffer_start[i+1];
+        memmove(buffer_start,temp,i*sizeof(temp[0]));
+        buffer_start[i] = '\0';
+        //orginise buffer_change
+        gchar buffer_change[j-i+1];
+        sprintf(buffer_change,"%d",new_y);
+        //move to buffer_end from j to k
+        gchar buffer_end[k-j+1];
+        memmove(buffer_end,temp+j*sizeof(temp[0]),k-j);
+        buffer_end[k-j] = '\0';
+        //concat them in temp
+        gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+        g_print("%s",temp_buffer);
+        temp_size = g_utf8_strlen (temp_buffer,-1);
+        g_strlcpy (temp,temp_buffer,temp_size+1);
+
+        //rewrite and redraw
+        temp_size++; //fix last symbol when we copy from temp_buffer - i don't really know why
+
+        GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+        GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+        g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+        gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+      }
+      i++;
+    }
+  }
 }
 static void
 change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
@@ -169,13 +212,73 @@ click_button_grid (GtkWidget *widget)
   g_print("#\n");
 }
 
-
-
 static void
 work_element_clicked (GtkWidget *widget, gint data)
 {
   temp_working_element = data;
   g_print("%d\n", temp_working_element);
+
+  //set values of controls to original
+  if(temp_working_element!=0)
+  {
+    //search in temp "Layer [temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
+    {
+      i++;
+    }
+    int x_found = 0;
+    int y_found = 0;
+    while( !(x_found && y_found) )
+    {
+      //find and set spin_button_x we oriented only for first element
+      if( (temp[i] =='x') && (temp[i+1] == '=') )
+      {
+        //move to current value
+        i+=3;
+        //find end of the current value
+        int j = i;
+        for(;temp[j]!='"';j++){}
+        //convert current value to int and change to new_x
+        gchar x_cur_char[20];
+        int m = 0;
+        for(int l=i;l<j;l++)
+        {
+          x_cur_char[m] = temp[l];
+          m++;
+        }
+        x_cur_char[m] = '\0';
+        int x_cur_int = atoi(x_cur_char);
+        gtk_spin_button_set_value (spin_button_x,x_cur_int);
+        x_found = 1;
+      }
+      //find and set spin_button_y
+      if( (temp[i] =='y') && (temp[i+1] == '=') )
+      {
+        //move to current value
+        i+=3;
+        //find end of the current value
+        int j = i;
+        for(;temp[j]!='"';j++){}
+        //convert current value to int and change to new_y
+        gchar y_cur_char[20];
+        int m = 0;
+        for(int l=i;l<j;l++)
+        {
+          y_cur_char[m] = temp[l];
+          m++;
+        }
+        y_cur_char[m]='\0';
+        int y_cur_int = atoi(y_cur_char);
+        gtk_spin_button_set_value (spin_button_y,y_cur_int);
+        y_found = 1;
+      }
+      i++;
+    }
+  }
+
 }
 
 static void
@@ -266,7 +369,7 @@ element_clicked (GtkWidget *widget, gchar *data)
     temp[k+1]='\0';
     temp = g_strconcat(temp,"\n   ",temp_buffer,"\n</svg>",NULL);
 
-     //call redraw
+     //call rewrite and redraw
      temp_size = g_utf8_strlen (temp,-1);
 
      GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
@@ -430,12 +533,9 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
       {
         gtk_grid_attach_next_to (self->grid_search_view,elements_widgets[i],elements_widgets[i-1],GTK_POS_RIGHT,100,100);
       }
-
     gtk_widget_set_size_request (elements_widgets[i],100,100);
     gtk_widget_set_visible (elements_widgets[i], TRUE);
   }
-
-
 
   //store temp element in /tmp(for working with svg content like a with text file)
   //create
@@ -518,4 +618,7 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
   g_signal_connect (self->scale_rotate , "value-changed", G_CALLBACK (change_scale_rotate) , self->scalerotate);
   g_signal_connect (self->scale_scale  , "value-changed", G_CALLBACK (change_scale_scale)  , self->scalescale);
   g_signal_connect (self->button_grid  , "clicked", G_CALLBACK (click_button_grid), NULL);
+
+  spin_button_x = self->spin_button_x;
+  spin_button_y = self->spin_button_y;
 }
