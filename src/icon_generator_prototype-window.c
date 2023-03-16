@@ -116,7 +116,7 @@ change_spin_button_x (GtkWidget *widget)
          //concat them in temp
          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
          temp_size = g_utf8_strlen (temp_buffer,-1);
-         g_strlcpy (temp,temp_buffer,temp_size+1);
+         g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
          g_print("finished working.\n");
       }
       else
@@ -230,7 +230,7 @@ change_spin_button_y (GtkWidget *widget)
          //concat them in temp
          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
          temp_size = g_utf8_strlen (temp_buffer,-1);
-         g_strlcpy (temp,temp_buffer,temp_size+1);
+         g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
          g_print("finished working.\n");
       }
       else
