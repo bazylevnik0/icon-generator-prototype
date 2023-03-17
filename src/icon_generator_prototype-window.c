@@ -122,7 +122,27 @@ change_spin_button_x (GtkWidget *widget)
       else
       {
          //if translate not exist add
-         //!temporary empty need other changes for testing
+          g_print("translate not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i*sizeof(temp[0]));
+          buffer_start[i] = '\0';
+          //organise buffer_change
+          gchar new_x_char[10];
+          sprintf(new_x_char,"%f",new_x);
+          gchar new_y_char[10];
+          sprintf(new_y_char,"%f",old_y);
+          gchar *buffer_change = g_strconcat("\ntranslate(",new_x_char," ",new_y_char,")\" ",NULL);
+          //move to buffer_end from i to end
+          int j = temp_size -i;
+          gchar buffer_end[j+1];
+          memmove(buffer_end,temp+i*sizeof(temp[0]),j);
+          buffer_end[j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen (temp_buffer,-1);
+          g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+          g_print("finished working.\n");
       }
     }
     else
@@ -276,8 +296,113 @@ change_spin_button_y (GtkWidget *widget)
 static void
 change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+ g_print("change_scale_rotate!\n");
+  gint new_angle = gtk_adjustment_get_value(data);
+                              //!temporary
+  if(temp_working_element!=0 && new_angle != 0)
+  {
+    //search in temp id "layer[temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0]))  )
+    {
+      i++;
+    }
+    i+=7;
+    g_print("working layer founded.\n");
+    //search transform after i ~200 symbols
+    int is_transform_exist = 0; //if we will not find then not exist
+    int k=0;
+    for(;k<200;k++)
+    {
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'f') && (temp[i+k+6] == 'o') && (temp[i+k+7] == 'r') && (temp[i+k+8] == 'm'))
+        {
+          is_transform_exist = 1;
+          i += k + 8;
+          break;
+        }
+    }
+    g_print("transform exist: %d.\n",is_transform_exist);
+    //analyze and transform
+    if(is_transform_exist)
+    {
+      //if transform exist
+      //try to find "rotate"
+      int is_rotate_exist = 0;
+      for(k = 0; k < 100; k++)
+      {
+        if((temp[i+k] =='r') && (temp[i+k+1] == 'o') && (temp[i+k+2] =='t') && (temp[i+k+3] == 'a') && (temp[i+k+4] == 't') && (temp[i+k+5] == 'e') )
+        {
+          is_rotate_exist = 1;
+          i += k + 7;
+          break;
+        }
+      }
+      g_print("rotate exist: %d.\n",is_rotate_exist);
+      //change
+      if(is_rotate_exist)
+      {
+         //if rotate exist change
+         g_print("rotate is exist, started working...\n");
+         //move to buffer_start from start to i
+         gchar buffer_start[i+1];
+         memmove(buffer_start,temp,i*sizeof(temp[0]));
+         buffer_start[i] = '\0';
+         //organise buffer_change
+         gchar new_angle_char[10];
+         sprintf(new_angle_char,"%d",new_angle);
+         gchar *buffer_change = g_strconcat(new_angle_char,NULL);
+         //move to buffer_end from i to end
+         for(k=0;temp[i+k]!=')';k++){};
+         gchar buffer_end[temp_size-k+1];
+         memmove(buffer_end,temp+i+k*sizeof(temp[0]),temp_size-k+1);
+         buffer_end[temp_size-k] = '\0';
+         //concat them in temp
+         gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+         temp_size = g_utf8_strlen (temp_buffer,-1);
+         g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+         g_print("finished working.\n");
+      }
+      else
+      {
+
+      }
+    }
+    else
+    {
+      //if transform not-exist -> create
+      g_print("transform not exist, started working...\n");
+      //move to buffer_start from start to i
+      gchar buffer_start[i+1];
+      memmove(buffer_start,temp,i*sizeof(temp[0]));
+      buffer_start[i] = '\0';
+      g_print("%s",buffer_start);
+      //organise buffer_change
+      gchar new_angle_char[10];
+      sprintf(new_angle_char,"%d",new_angle);
+      gchar *buffer_change = g_strconcat("\ntransform=\"rotate(",new_angle_char,")\"",NULL);
+      g_print("%s",buffer_change);
+      //move to buffer_end from i to end
+      int j = temp_size -i;
+      gchar buffer_end[j+1];
+      memmove(buffer_end,temp+i*sizeof(temp[0]),j);
+      buffer_end[j] = '\0';
+      g_print("%s",buffer_end);
+      //concat them in temp
+      gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+      temp_size = g_utf8_strlen (temp_buffer,-1);
+      g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+      g_print("finished working.\n");
+    }
+    temp_size+=sizeof(temp[0]);
+    //rewrite & redraw
+    GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+    GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+    g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+    gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+  }
+
 }
 static void
 change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
