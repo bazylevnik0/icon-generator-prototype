@@ -19,6 +19,7 @@
 #include "icon_generator_prototype-config.h"
 #include "icon_generator_prototype-window.h"
 #include <sys/stat.h>  //for creating temp folder
+#include <ctype.h>
 
 //functional for search_entry and grid_search_view
 GtkGrid   *grid_search_view_temp;
@@ -49,16 +50,24 @@ static void
 change_spin_button_x (GtkWidget *widget)
 {
   g_print("change_spin_button_x!\n");
+
   gdouble new_x = gtk_spin_button_get_value (spin_button_x);
   gdouble old_y = gtk_spin_button_get_value (spin_button_y);
-                                //!temporary
+                               //!temporary for avoid sets to
   if(temp_working_element!=0 && new_x != 0)
   {
+    free(temp);
+    temp = malloc(temp_size);
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
     sprintf(layer,"%d",temp_working_element);
-    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0]))  )
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0])) )
     {
       i++;
     }
@@ -100,32 +109,37 @@ change_spin_button_x (GtkWidget *widget)
          g_print("translate is exist, started working...\n");
          //move to buffer_start from start to i
          gchar buffer_start[i+1];
-         memmove(buffer_start,temp,i*sizeof(temp[0]));
+         memmove(buffer_start,temp,i);
          buffer_start[i] = '\0';
          //organise buffer_change
-         gchar new_x_char[10];
+         gchar new_x_char[20];
          sprintf(new_x_char,"%f",new_x);
-         gchar new_y_char[10];
+         gchar new_y_char[20];
          sprintf(new_y_char,"%f",old_y);
-         gchar *buffer_change = g_strconcat(new_x_char," ",new_y_char,NULL);
+         gchar *buffer_change = g_strconcat(new_x_char,"  ",new_y_char,NULL);
          //move to buffer_end from i to end
+         temp_size = g_utf8_strlen(temp,-1);
          for(k=0;temp[i+k]!=')';k++){};
-         gchar buffer_end[temp_size-k+1];
-         memmove(buffer_end,temp+i+k*sizeof(temp[0]),temp_size-k+1);
-         buffer_end[temp_size-k] = '\0';
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
          //concat them in temp
          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
-         temp_size = g_utf8_strlen (temp_buffer,-1);
-         g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+         temp_size = g_utf8_strlen(temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size);
+         memmove(temp,temp_buffer,temp_size);
          g_print("finished working.\n");
       }
       else
       {
+          /*
          //if translate not exist add
           g_print("translate not exist, started working...\n");
           //move to buffer_start from start to i
           gchar buffer_start[i+1];
-          memmove(buffer_start,temp,i*sizeof(temp[0]));
+          memmove(buffer_start,temp,i*sizeof(gchar);
           buffer_start[i] = '\0';
           //organise buffer_change
           gchar new_x_char[10];
@@ -143,38 +157,47 @@ change_spin_button_x (GtkWidget *widget)
           temp_size = g_utf8_strlen (temp_buffer,-1);
           g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
           g_print("finished working.\n");
+          */
       }
     }
     else
     {
       //if transform not-exist -> create
       g_print("transform not exist, started working...\n");
+      g_print("temp[i]:%c",temp[i]); // '>' of <g...
       //move to buffer_start from start to i
       gchar buffer_start[i+1];
-      memmove(buffer_start,temp,i*sizeof(temp[0]));
+      memmove(buffer_start,temp,i);
       buffer_start[i] = '\0';
+      g_print("%s",buffer_start);
       //organise buffer_change
-      gchar new_x_char[10];
+      gchar new_x_char[20];
       sprintf(new_x_char,"%f",new_x);
-      gchar new_y_char[10];
+      gchar new_y_char[20];
       sprintf(new_y_char,"%f",old_y);
       gchar *buffer_change = g_strconcat("\ntransform=\"translate(",new_x_char," ",new_y_char,")\"",NULL);
+      g_print("%s",buffer_change);
       //move to buffer_end from i to end
       int j = temp_size -i;
-      gchar buffer_end[j+1];
-      memmove(buffer_end,temp+i*sizeof(temp[0]),j);
-      buffer_end[j] = '\0';
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[i-j] = '\0';
+      g_print("%s",buffer_end);
       //concat them in temp
       gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
       temp_size = g_utf8_strlen (temp_buffer,-1);
-      g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+      free(temp);
+      temp = malloc(temp_size);
+      memmove(temp,temp_buffer,temp_size);
       g_print("finished working.\n");
     }
-    temp_size+=sizeof(temp[0]);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //rewrite & redraw
     GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
     GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
-    g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
     gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
 }
@@ -183,6 +206,7 @@ static void
 change_spin_button_y (GtkWidget *widget)
 {
   g_print("change_spin_button_y!\n");
+  /*
   gdouble new_y = gtk_spin_button_get_value (spin_button_y);
   gdouble old_x = gtk_spin_button_get_value (spin_button_x);
                               //!temporary
@@ -291,12 +315,13 @@ change_spin_button_y (GtkWidget *widget)
     g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
     gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
-
+  */
 }
 static void
 change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
 {
  g_print("change_scale_rotate!\n");
+  /*
   gint new_angle = gtk_adjustment_get_value(data);
                               //!temporary
   if(temp_working_element!=0 && new_angle != 0)
@@ -402,13 +427,14 @@ change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
     g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
     gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
-
+  */
 }
 static void
 change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+  g_print("change_scale_scale!\n");
+  //gint t = gtk_adjustment_get_value(data);
+  //g_print("%d\n",t);
 }
 static void
 click_button_grid (GtkWidget *widget)
@@ -433,8 +459,10 @@ element_clicked (GtkWidget *widget, gchar *data)
 {
   widget = widget;     //temporary
 
+
+  //!here below we have a bug with /00 and corrupted file
   int i = 0;
-  while(g_strcmp0 (temp_work_elements[i],"0"))
+  while(g_strcmp0(temp_work_elements[i],"0"))
   {
     i++;
   }
@@ -444,20 +472,20 @@ element_clicked (GtkWidget *widget, gchar *data)
     //add to temp_work_element
     temp_work_elements[i] = data;
     //add to work_element to control_box
-    temp_work_elements_widgets[i] = gtk_button_new ();
-    gtk_button_set_label (GTK_BUTTON(temp_work_elements_widgets[i]),data);
+    temp_work_elements_widgets[i] = gtk_button_new();
+    gtk_button_set_label(GTK_BUTTON(temp_work_elements_widgets[i]),data);
                                                                                                 //real id of layer(temp_work_element) in workint temp_file
                                                                                                 //see below
     g_signal_connect(temp_work_elements_widgets[i], "clicked", G_CALLBACK (work_element_clicked), i+2);
     //add to control_box
-    gtk_box_append (control_box, temp_work_elements_widgets[i]);
+    gtk_box_append(control_box, temp_work_elements_widgets[i]);
     //add to draw
     //
     //1)copy to temp_buffer search "<g" in temp_buffer and "</g>"
     GFile *temp_buffer_file = g_file_new_for_path (data);
-    GFileInputStream *temp_buffer_istream = g_file_read (temp_buffer_file, NULL, NULL);
+    GFileInputStream *temp_buffer_istream = g_file_read(temp_buffer_file, NULL, NULL);
     gchar temp_buffer[10000];
-    g_input_stream_read (temp_buffer_istream, temp_buffer, 10000, NULL, NULL);
+    g_input_stream_read(temp_buffer_istream, temp_buffer, 10000, NULL, NULL);
     //g_input_stream_close (temp_buffer_istream,NULL,NULL);
 
     //ye it hardcoded, but for inkscape must work for simple elements, if app continue growth
@@ -620,8 +648,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-
-
   //first load grid_search_view
   grid_search_view_temp = self->grid_search_view;
 
@@ -726,14 +752,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 "     inkscape:label=\"Layer 1\"\n",
 "     inkscape:groupmode=\"layer\"\n",
 "     id=\"layer1\">\n",
-"    <text\n",
-"       xml:space=\"preserve\"\n",
-"       transform=\"matrix(0.26458333,0,0,0.26458333,5.5401104,4.8437908)\"\n",
-"       id=\"text234\"\n",
-"       style=\"font-size:64px;white-space:pre;shape-inside:url(#rect236);display:inline;fill:#000000;stroke-width:3.77953\"><tspan\n",
-"         x=\"32.619141\"\n",
-"         y=\"82.716797\"\n",
-"         id=\"tspan367\">1</tspan></text>\n",
 "   </g> \n",
 "</svg>\n",NULL);
 
@@ -746,7 +764,7 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 
   GFileOutputStream *gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
   //GFileInputStream  *gfistream = g_file_read (temp_file, NULL, NULL);
-  g_output_stream_write (gfostream, temp, temp_size, NULL, NULL);
+  g_output_stream_write (gfostream, temp, temp_size-1, NULL, NULL);
   gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   //g_input_stream_read (gfistream, temp, temp_size, NULL, NULL);
 
