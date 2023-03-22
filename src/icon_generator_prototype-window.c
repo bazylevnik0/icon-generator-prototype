@@ -46,165 +46,586 @@ GtkSpinButton       *spin_button_x;
 GtkSpinButton       *spin_button_y;
 
 static void
-change_spin_button_x (GtkWidget *widget, GtkAdjustment *data)
+change_spin_button_x (GtkWidget *widget)
 {
-  //                                          //
-  //                                          //
-  //!temporary - only for one-level elements  //
-  //                                          //
-  //                                          //
-  gint new_x = gtk_adjustment_get_value(data);
+  g_print("change_spin_button_x!\n");
 
-  if(temp_working_element!=0)
+  gdouble new_x = gtk_spin_button_get_value (spin_button_x);
+  gdouble old_y = gtk_spin_button_get_value (spin_button_y);
+                               //!temporary for avoid sets to
+  if(temp_working_element!=0 && new_x != 0)
   {
-    //search in temp "Layer [temp_working_element]"
+    free(temp);
+    temp = malloc(temp_size+1);
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
     sprintf(layer,"%d",temp_working_element);
-    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0])) )
     {
       i++;
     }
-    g_print("%c\n",temp[i+6]);
-    //search end of layer
-    int k = i;
-    while ( !((temp[k] =='<') && (temp[k+1] =='/') && (temp[k+2] =='s') && (temp[k+3] =='v') && (temp[k+4] == 'g') && (temp[k+5] == '>')) )
+    i+=7;
+    g_print("working layer founded.\n");
+    //search transform after i ~200 symbols
+    int is_transform_exist = 0; //if we will not find then not exist
+    int k=0;
+    for(;k<200;k++)
     {
-      k++;
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'f') && (temp[i+k+6] == 'o') && (temp[i+k+7] == 'r') && (temp[i+k+8] == 'm'))
+        {
+          is_transform_exist = 1;
+          i += k + 11;
+          break;
+        }
     }
-    k+=6;
-    //work with all element in layer
-    while(i<=k)
+    g_print("transform exist: %d.\n",is_transform_exist);
+    //analyze and transform
+    if(is_transform_exist)
     {
-      if( (temp[i] =='x') && (temp[i+1] == '=') )
+      //if transform exist
+      //try to find "translate"
+      int is_translate_exist = 0;
+      for(k = 0; k < 100; k++)
       {
-        //move to current value
-        i+=3;
-        //find end of the current value
-        int j = i;
-        for(;temp[j]!='"';j++){}
-        //change in file
-        //
-        //table of current points:
-        //i - start point of changes
-        //j - end   point of changes
-        //k - end   point of file(not sure about EOF,maybe we must set it)
-        //
-        //move to buffer_start from start to i
-        gchar buffer_start[i+1];
-        memmove(buffer_start,temp,i*sizeof(temp[0]));
-        buffer_start[i] = '\0';
-        //orginise buffer_change
-        gchar buffer_change[j-i+1];
-        sprintf(buffer_change,"%d",new_x);
-        //move to buffer_end from j to k
-        gchar buffer_end[k-j+1];
-        memmove(buffer_end,temp+j*sizeof(temp[0]),k-j);
-        buffer_end[k-j] = '\0';
-        //concat them in temp
-        gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
-        g_print("%s",temp_buffer);
-        temp_size = g_utf8_strlen (temp_buffer,-1);
-        g_strlcpy (temp,temp_buffer,temp_size+1);
-
-        //rewrite and redraw
-        temp_size++; //fix last symbol when we copy from temp_buffer - i don't really know why
-
-        GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
-        GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
-        g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
-        gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'l') && (temp[i+k+6] == 'a') && (temp[i+k+7] == 't') && (temp[i+k+8] == 'e'))
+        {
+          is_translate_exist = 1;
+          i += k + 10;
+          break;
+        }
       }
-      i++;
+      g_print("translate exist: %d.\n",is_translate_exist);
+      //change
+      if(is_translate_exist)
+      {
+         //if translate exist change
+         g_print("translate is exist, started working...\n");
+         //move to buffer_start from start to i
+         gchar buffer_start[i+1];
+         memmove(buffer_start,temp,i);
+         buffer_start[i] = '\0';
+         //organise buffer_change
+         gchar new_x_char[20];
+         sprintf(new_x_char,"%f",new_x);
+         gchar new_y_char[20];
+         sprintf(new_y_char,"%f",old_y);
+         gchar *buffer_change = g_strconcat(new_x_char,"  ",new_y_char,NULL);
+         //move to buffer_end from i to end
+         temp_size = g_utf8_strlen(temp,-1);
+         for(k=0;temp[i+k]!=')';k++){};
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
+         //concat them in temp
+         gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+         temp_size = g_utf8_strlen(temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size+1);
+         memmove(temp,temp_buffer,temp_size);
+         g_print("finished working.\n");
+      }
+      else
+      {
+          //if rotate not exist add
+          g_print("rotate not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i);
+          buffer_start[i] = '\0';
+          //organise buffer_change
+          gchar new_x_char[20];
+          sprintf(new_x_char,"%f",new_x);
+          gchar new_y_char[20];
+          sprintf(new_y_char,"%f",old_y);
+          gchar *buffer_change = g_strconcat("\ntranslate(",new_x_char," ",new_y_char,")\"\n",NULL);
+          //move to buffer_end from i to end
+          int j = temp_size -i;
+          gchar buffer_end[i-j+1];
+          memmove(buffer_end,temp+i,i-j);
+          buffer_end[i-j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen (temp_buffer,-1);
+          free(temp);
+          temp = malloc(temp_size+1);
+          memmove(temp,temp_buffer,temp_size);
+          g_print("finished working.\n");
+      }
     }
+    else
+    {
+      //if transform not-exist -> create
+      g_print("transform not exist, started working...\n");
+      //move to buffer_start from start to i
+      gchar buffer_start[i+1];
+      memmove(buffer_start,temp,i);
+      buffer_start[i] = '\0';
+      //organise buffer_change
+      gchar new_x_char[20];
+      sprintf(new_x_char,"%f",new_x);
+      gchar new_y_char[20];
+      sprintf(new_y_char,"%f",old_y);
+      gchar *buffer_change = g_strconcat("\ntransform=\"translate(",new_x_char," ",new_y_char,")\"\n",NULL);
+      //move to buffer_end from i to end
+      int j = temp_size -i;
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[i-j] = '\0';
+      //concat them in temp
+      gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+      temp_size = g_utf8_strlen (temp_buffer,-1);
+      free(temp);
+      temp = malloc(temp_size+1);
+      memmove(temp,temp_buffer,temp_size);
+      g_print("finished working.\n");
+    }
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //rewrite & redraw
+    GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+    GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
+    gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
 }
 
 static void
-change_spin_button_y (GtkWidget *widget, GtkAdjustment *data)
+change_spin_button_y (GtkWidget *widget)
 {
-  //                                          //
-  //                                          //
-  //!temporary - only for one-level elements  //
-  //                                          //
-  //                                          //
-  gint new_y = gtk_adjustment_get_value(data);
+    g_print("change_spin_button_y!\n");
 
-  if(temp_working_element!=0)
+  gdouble old_x = gtk_spin_button_get_value (spin_button_x);
+  gdouble new_y = gtk_spin_button_get_value (spin_button_y);
+                               //!temporary for avoid sets to
+  if(temp_working_element!=0 && new_y != 0)
   {
-    //search in temp "Layer [temp_working_element]"
+    free(temp);
+    temp = malloc(temp_size+1);
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
     sprintf(layer,"%d",temp_working_element);
-    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0])) )
     {
       i++;
     }
-    g_print("%c\n",temp[i+6]);
-    //search end of layer
-    int k = i;
-    while ( !((temp[k] =='<') && (temp[k+1] =='/') && (temp[k+2] =='s') && (temp[k+3] =='v') && (temp[k+4] == 'g') && (temp[k+5] == '>')) )
+    i+=7;
+    g_print("working layer founded.\n");
+    //search transform after i ~200 symbols
+    int is_transform_exist = 0; //if we will not find then not exist
+    int k=0;
+    for(;k<200;k++)
     {
-      k++;
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'f') && (temp[i+k+6] == 'o') && (temp[i+k+7] == 'r') && (temp[i+k+8] == 'm'))
+        {
+          is_transform_exist = 1;
+          i += k + 11;
+          break;
+        }
     }
-    k+=6;
-    //work with all element in layer
-    while(i<=k)
+    g_print("transform exist: %d.\n",is_transform_exist);
+    //analyze and transform
+    if(is_transform_exist)
     {
-      if( (temp[i] =='y') && (temp[i+1] == '=') )
+      //if transform exist
+      //try to find "translate"
+      int is_translate_exist = 0;
+      for(k = 0; k < 100; k++)
       {
-        //move to current value
-        i+=3;
-        //find end of the current value
-        int j = i;
-        for(;temp[j]!='"';j++){}
-        //change in file
-        //
-        //table of current points:
-        //i - start point of changes
-        //j - end   point of changes
-        //k - end   point of file(not sure about EOF,maybe we must set it)
-        //
-        //move to buffer_start from start to i
-        gchar buffer_start[i+1];
-        memmove(buffer_start,temp,i*sizeof(temp[0]));
-        buffer_start[i] = '\0';
-        //orginise buffer_change
-        gchar buffer_change[j-i+1];
-        sprintf(buffer_change,"%d",new_y);
-        //move to buffer_end from j to k
-        gchar buffer_end[k-j+1];
-        memmove(buffer_end,temp+j*sizeof(temp[0]),k-j);
-        buffer_end[k-j] = '\0';
-        //concat them in temp
-        gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
-        g_print("%s",temp_buffer);
-        temp_size = g_utf8_strlen (temp_buffer,-1);
-        g_strlcpy (temp,temp_buffer,temp_size+1);
-
-        //rewrite and redraw
-        temp_size++; //fix last symbol when we copy from temp_buffer - i don't really know why
-
-        GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
-        GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
-        g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
-        gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'l') && (temp[i+k+6] == 'a') && (temp[i+k+7] == 't') && (temp[i+k+8] == 'e'))
+        {
+          is_translate_exist = 1;
+          i += k + 10;
+          break;
+        }
       }
-      i++;
+      g_print("translate exist: %d.\n",is_translate_exist);
+      //change
+      if(is_translate_exist)
+      {
+         //if translate exist change
+         g_print("translate is exist, started working...\n");
+         //move to buffer_start from start to i
+         gchar buffer_start[i+1];
+         memmove(buffer_start,temp,i);
+         buffer_start[i] = '\0';
+         //organise buffer_change
+         gchar new_x_char[20];
+         sprintf(new_x_char,"%f",old_x);
+         gchar new_y_char[20];
+         sprintf(new_y_char,"%f",new_y);
+         gchar *buffer_change = g_strconcat(new_x_char,"  ",new_y_char,NULL);
+         //move to buffer_end from i to end
+         temp_size = g_utf8_strlen(temp,-1);
+         for(k=0;temp[i+k]!=')';k++){};
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
+         //concat them in temp
+         gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+         temp_size = g_utf8_strlen(temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size+1);
+         memmove(temp,temp_buffer,temp_size);
+         g_print("finished working.\n");
+      }
+      else
+      {
+          //if rotate not exist add
+          g_print("rotate not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i);
+          buffer_start[i] = '\0';
+          //organise buffer_change
+          gchar new_x_char[20];
+          sprintf(new_x_char,"%f",old_x);
+          gchar new_y_char[20];
+          sprintf(new_y_char,"%f",new_y);
+          gchar *buffer_change = g_strconcat("\ntranslate(",new_x_char," ",new_y_char,")\"\n",NULL);
+          //move to buffer_end from i to end
+          int j = temp_size -i;
+          gchar buffer_end[i-j+1];
+          memmove(buffer_end,temp+i,i-j);
+          buffer_end[i-j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen (temp_buffer,-1);
+          free(temp);
+          temp = malloc(temp_size+1);
+          memmove(temp,temp_buffer,temp_size);
+          g_print("finished working.\n");
+      }
     }
+    else
+    {
+      //if transform not-exist -> create
+      g_print("transform not exist, started working...\n");
+      //move to buffer_start from start to i
+      gchar buffer_start[i+1];
+      memmove(buffer_start,temp,i);
+      buffer_start[i] = '\0';
+      //organise buffer_change
+      gchar new_x_char[20];
+      sprintf(new_x_char,"%f",old_x);
+      gchar new_y_char[20];
+      sprintf(new_y_char,"%f",new_y);
+      gchar *buffer_change = g_strconcat("\ntransform=\"translate(",new_x_char," ",new_y_char,")\"\n",NULL);
+      //move to buffer_end from i to end
+      int j = temp_size -i;
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[i-j] = '\0';
+      //concat them in temp
+      gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+      temp_size = g_utf8_strlen (temp_buffer,-1);
+      free(temp);
+      temp = malloc(temp_size+1);
+      memmove(temp,temp_buffer,temp_size);
+      g_print("finished working.\n");
+    }
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //rewrite & redraw
+    GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+    GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
+    gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
 }
 static void
 change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+  g_print("change_scale_rotate!\n");
+
+  gint new_angle = gtk_adjustment_get_value(data);
+                              //!temporary
+  if(temp_working_element!=0 && new_angle != 0)
+  {
+    //search in temp id "layer[temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0]))  )
+    {
+      i++;
+    }
+    i+=7;
+    g_print("working layer founded.\n");
+    //search transform after i ~200 symbols
+    int is_transform_exist = 0; //if we will not find then not exist
+    int k=0;
+    for(;k<200;k++)
+    {
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'f') && (temp[i+k+6] == 'o') && (temp[i+k+7] == 'r') && (temp[i+k+8] == 'm'))
+        {
+          is_transform_exist = 1;
+          i += k + 11;
+          break;
+        }
+    }
+    g_print("transform exist: %d.\n",is_transform_exist);
+    //analyze and transform
+    if(is_transform_exist)
+    {
+      //if transform exist
+      //try to find "rotate"
+      int is_rotate_exist = 0;
+      for(k = 0; k < 100; k++)
+      {
+        if((temp[i+k] =='r') && (temp[i+k+1] == 'o') && (temp[i+k+2] =='t') && (temp[i+k+3] == 'a') && (temp[i+k+4] == 't') && (temp[i+k+5] == 'e') )
+        {
+          is_rotate_exist = 1;
+          i += k + 7;
+          break;
+        }
+      }
+      g_print("rotate exist: %d.\n",is_rotate_exist);
+      //change
+      if(is_rotate_exist)
+      {
+         //if rotate exist change
+         g_print("rotate is exist, started working...\n");
+         //move to buffer_start from start to i
+         gchar buffer_start[i+1];
+         memmove(buffer_start,temp,i);
+         buffer_start[i] = '\0';
+         //organise buffer_change
+         gchar new_angle_char[20];
+         sprintf(new_angle_char,"%d",new_angle);
+         gchar *buffer_change = g_strconcat(new_angle_char,NULL);
+         //move to buffer_end from i to end
+         for(k=0;temp[i+k]!=')';k++){};
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
+         //concat them in temp
+         gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+         temp_size = g_utf8_strlen (temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size+1);
+         memmove(temp,temp_buffer,temp_size);
+         g_print("finished working.\n");
+      }
+      else
+      {
+          //if rotate not exist add
+          g_print("rotate not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i);
+          buffer_start[i] = '\0';
+          g_print("%s",buffer_start);
+          //organise buffer_change
+          gchar new_angle_char[20];
+          sprintf(new_angle_char,"%d",new_angle);
+          gchar *buffer_change = g_strconcat("\nrotate(",new_angle_char,")\n",NULL);
+          g_print("%s",buffer_change);
+          //move to buffer_end from i to end
+          int j = temp_size - i;
+          gchar buffer_end[i-j+1];
+          memmove(buffer_end,temp+i,i-j);
+          buffer_end[i-j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen(temp_buffer,-1);
+          free(temp);
+          temp = malloc(temp_size+1);
+          memmove(temp,temp_buffer,temp_size);
+          g_print("finished working.\n");
+      }
+    }
+    else
+    {
+      //if transform not-exist -> create
+      g_print("transform not exist, started working...\n");
+      //move to buffer_start from start to i
+      gchar buffer_start[i+1];
+      memmove(buffer_start,temp,i);
+      buffer_start[i] = '\0';
+      //organise buffer_change
+      gchar new_angle_char[20];
+      sprintf(new_angle_char,"%d",new_angle);
+      gchar *buffer_change = g_strconcat("\ntransform=\"rotate(",new_angle_char,")\"\n",NULL);
+      //move to buffer_end from i to end
+      int j = temp_size -i;
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[j] = '\0';
+      g_print("%s",buffer_end);
+      //concat them in temp
+      gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+      temp_size = g_utf8_strlen (temp_buffer,-1);
+      free(temp);
+      temp = malloc(temp_size+1);
+      memmove(temp,temp_buffer,temp_size);
+      g_print("finished working.\n");
+    }
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //rewrite & redraw
+    GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+    GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
+    gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+  }
 }
 static void
 change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
 {
-  gint t = gtk_adjustment_get_value(data);
-  g_print("%d\n",t);
+  g_print("change_scale_scale!\n");
+
+  gfloat new_scale = gtk_adjustment_get_value(data);
+                              //!temporary
+  if(temp_working_element!=0 && new_scale != 1)
+  {
+    //search in temp id "layer[temp_working_element]"
+    int i = 0;
+    char layer[2];
+    sprintf(layer,"%d",temp_working_element);
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0]))  )
+    {
+      i++;
+    }
+    i+=7;
+    g_print("working layer founded.\n");
+    //search transform after i ~200 symbols
+    int is_transform_exist = 0; //if we will not find then not exist
+    int k=0;
+    for(;k<200;k++)
+    {
+        if((temp[i+k] =='t') && (temp[i+k+1] == 'r') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'n') && (temp[i+k+4] == 's') && (temp[i+k+5] == 'f') && (temp[i+k+6] == 'o') && (temp[i+k+7] == 'r') && (temp[i+k+8] == 'm'))
+        {
+          is_transform_exist = 1;
+          i += k + 11;
+          break;
+        }
+    }
+    g_print("transform exist: %d.\n",is_transform_exist);
+    //analyze and transform
+    if(is_transform_exist)
+    {
+      //if transform exist
+      //try to find "scale"
+      int is_scale_exist = 0;
+      for(k = 0; k < 100; k++)
+      {
+        if((temp[i+k] =='s') && (temp[i+k+1] == 'c') && (temp[i+k+2] =='a') && (temp[i+k+3] == 'l') && (temp[i+k+4] == 'e') )
+        {
+          is_scale_exist = 1;
+          i += k + 6;
+          break;
+        }
+      }
+      g_print("scale exist: %d.\n",is_scale_exist);
+      //change
+      if(is_scale_exist)
+      {
+         //if rotate exist change
+         g_print("scale is exist, started working...\n");
+         //move to buffer_start from start to i
+         gchar buffer_start[i+1];
+         memmove(buffer_start,temp,i);
+         buffer_start[i] = '\0';
+         //organise buffer_change
+         gchar new_scale_char[20];
+         sprintf(new_scale_char,"%f",new_scale);
+         gchar *buffer_change = g_strconcat(new_scale_char,NULL);
+         //move to buffer_end from i to end
+         for(k=0;temp[i+k]!=')';k++){};
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
+         //concat them in temp
+         gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+         temp_size = g_utf8_strlen (temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size+1);
+         memmove(temp,temp_buffer,temp_size);
+         g_print("finished working.\n");
+      }
+      else
+      {
+          //if scale not exist add
+          g_print("scale not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i);
+          buffer_start[i] = '\0';
+          g_print("%s",buffer_start);
+          //organise buffer_change
+          gchar new_scale_char[20];
+          sprintf(new_scale_char,"%f",new_scale);
+          gchar *buffer_change = g_strconcat("\nscale(",new_scale_char,")\n",NULL);
+          g_print("%s",buffer_change);
+          //move to buffer_end from i to end
+          int j = temp_size - i;
+          gchar buffer_end[i-j+1];
+          memmove(buffer_end,temp+i,i-j);
+          buffer_end[i-j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen(temp_buffer,-1);
+          free(temp);
+          temp = malloc(temp_size+1);
+          memmove(temp,temp_buffer,temp_size);
+          g_print("finished working.\n");
+      }
+    }
+    else
+    {
+      //if transform not-exist -> create
+      g_print("transform not exist, started working...\n");
+      //move to buffer_start from start to i
+      gchar buffer_start[i+1];
+      memmove(buffer_start,temp,i);
+      buffer_start[i] = '\0';
+      //organise buffer_change
+      gchar new_scale_char[20];
+      sprintf(new_scale_char,"%f",new_scale);
+      gchar *buffer_change = g_strconcat("\ntransform=\"scale(",new_scale_char,")\"\n",NULL);
+      //move to buffer_end from i to end
+      int j = temp_size -i;
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[j] = '\0';
+      g_print("%s",buffer_end);
+      //concat them in temp
+      gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+      temp_size = g_utf8_strlen (temp_buffer,-1);
+      free(temp);
+      temp = malloc(temp_size+1);
+      memmove(temp,temp_buffer,temp_size);
+      g_print("finished working.\n");
+    }
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
+    //rewrite & redraw
+    GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+    GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
+    gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
+  }
+
 }
 static void
 click_button_grid (GtkWidget *widget)
@@ -216,69 +637,12 @@ static void
 work_element_clicked (GtkWidget *widget, gint data)
 {
   temp_working_element = data;
-  g_print("%d\n", temp_working_element);
-
-  //set values of controls to original
-  if(temp_working_element!=0)
-  {
-    //search in temp "Layer [temp_working_element]"
-    int i = 0;
-    char layer[2];
-    sprintf(layer,"%d",temp_working_element);
-    while ( !((temp[i] =='L') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == ' ') && (temp[i+6] == layer[0]))  )
-    {
-      i++;
-    }
-    int x_found = 0;
-    int y_found = 0;
-    while( !(x_found && y_found) )
-    {
-      //find and set spin_button_x we oriented only for first element
-      if( (temp[i] =='x') && (temp[i+1] == '=') )
-      {
-        //move to current value
-        i+=3;
-        //find end of the current value
-        int j = i;
-        for(;temp[j]!='"';j++){}
-        //convert current value to int and change to new_x
-        gchar x_cur_char[20];
-        int m = 0;
-        for(int l=i;l<j;l++)
-        {
-          x_cur_char[m] = temp[l];
-          m++;
-        }
-        x_cur_char[m] = '\0';
-        int x_cur_int = atoi(x_cur_char);
-        gtk_spin_button_set_value (spin_button_x,x_cur_int);
-        x_found = 1;
-      }
-      //find and set spin_button_y
-      if( (temp[i] =='y') && (temp[i+1] == '=') )
-      {
-        //move to current value
-        i+=3;
-        //find end of the current value
-        int j = i;
-        for(;temp[j]!='"';j++){}
-        //convert current value to int and change to new_y
-        gchar y_cur_char[20];
-        int m = 0;
-        for(int l=i;l<j;l++)
-        {
-          y_cur_char[m] = temp[l];
-          m++;
-        }
-        y_cur_char[m]='\0';
-        int y_cur_int = atoi(y_cur_char);
-        gtk_spin_button_set_value (spin_button_y,y_cur_int);
-        y_found = 1;
-      }
-      i++;
-    }
-  }
-
+  //!temporary
+  //reset control
+  gtk_spin_button_set_value(spin_button_x,0);
+  gtk_spin_button_set_value(spin_button_y,0);
+  //!
+  //analyze and set current values:
 }
 
 static void
@@ -286,8 +650,10 @@ element_clicked (GtkWidget *widget, gchar *data)
 {
   widget = widget;     //temporary
 
+
+  //!here below we have a bug with /00 and corrupted file
   int i = 0;
-  while(g_strcmp0 (temp_work_elements[i],"0"))
+  while(g_strcmp0(temp_work_elements[i],"0"))
   {
     i++;
   }
@@ -297,20 +663,20 @@ element_clicked (GtkWidget *widget, gchar *data)
     //add to temp_work_element
     temp_work_elements[i] = data;
     //add to work_element to control_box
-    temp_work_elements_widgets[i] = gtk_button_new ();
-    gtk_button_set_label (GTK_BUTTON(temp_work_elements_widgets[i]),data);
+    temp_work_elements_widgets[i] = gtk_button_new();
+    gtk_button_set_label(GTK_BUTTON(temp_work_elements_widgets[i]),data);
                                                                                                 //real id of layer(temp_work_element) in workint temp_file
                                                                                                 //see below
     g_signal_connect(temp_work_elements_widgets[i], "clicked", G_CALLBACK (work_element_clicked), i+2);
     //add to control_box
-    gtk_box_append (control_box, temp_work_elements_widgets[i]);
+    gtk_box_append(control_box, temp_work_elements_widgets[i]);
     //add to draw
     //
     //1)copy to temp_buffer search "<g" in temp_buffer and "</g>"
     GFile *temp_buffer_file = g_file_new_for_path (data);
-    GFileInputStream *temp_buffer_istream = g_file_read (temp_buffer_file, NULL, NULL);
+    GFileInputStream *temp_buffer_istream = g_file_read(temp_buffer_file, NULL, NULL);
     gchar temp_buffer[10000];
-    g_input_stream_read (temp_buffer_istream, temp_buffer, 10000, NULL, NULL);
+    g_input_stream_read(temp_buffer_istream, temp_buffer, 10000, NULL, NULL);
     //g_input_stream_close (temp_buffer_istream,NULL,NULL);
 
     //ye it hardcoded, but for inkscape must work for simple elements, if app continue growth
@@ -473,8 +839,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
 
-
-
   //first load grid_search_view
   grid_search_view_temp = self->grid_search_view;
 
@@ -579,14 +943,6 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 "     inkscape:label=\"Layer 1\"\n",
 "     inkscape:groupmode=\"layer\"\n",
 "     id=\"layer1\">\n",
-"    <text\n",
-"       xml:space=\"preserve\"\n",
-"       transform=\"matrix(0.26458333,0,0,0.26458333,5.5401104,4.8437908)\"\n",
-"       id=\"text234\"\n",
-"       style=\"font-size:64px;white-space:pre;shape-inside:url(#rect236);display:inline;fill:#000000;stroke-width:3.77953\"><tspan\n",
-"         x=\"32.619141\"\n",
-"         y=\"82.716797\"\n",
-"         id=\"tspan367\">1</tspan></text>\n",
 "   </g> \n",
 "</svg>\n",NULL);
 
@@ -599,7 +955,7 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 
   GFileOutputStream *gfostream = g_file_create (temp_file, G_FILE_CREATE_NONE, NULL, NULL);
   //GFileInputStream  *gfistream = g_file_read (temp_file, NULL, NULL);
-  g_output_stream_write (gfostream, temp, temp_size, NULL, NULL);
+  g_output_stream_write (gfostream, temp, temp_size-1, NULL, NULL);
   gtk_image_set_from_file (self->draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   //g_input_stream_read (gfistream, temp, temp_size, NULL, NULL);
 
@@ -613,8 +969,8 @@ icon_generator_prototype_window_init (IconGeneratorPrototypeWindow *self)
 
 
   //set handlers for control
-  g_signal_connect (self->spin_button_x, "value-changed", G_CALLBACK (change_spin_button_x), self->spinx);
-  g_signal_connect (self->spin_button_y, "value-changed", G_CALLBACK (change_spin_button_y), self->spiny);
+  g_signal_connect (self->spin_button_x, "value-changed", G_CALLBACK (change_spin_button_x), NULL);
+  g_signal_connect (self->spin_button_y, "value-changed", G_CALLBACK (change_spin_button_y), NULL);
   g_signal_connect (self->scale_rotate , "value-changed", G_CALLBACK (change_scale_rotate) , self->scalerotate);
   g_signal_connect (self->scale_scale  , "value-changed", G_CALLBACK (change_scale_scale)  , self->scalescale);
   g_signal_connect (self->button_grid  , "clicked", G_CALLBACK (click_button_grid), NULL);
