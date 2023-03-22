@@ -19,7 +19,6 @@
 #include "icon_generator_prototype-config.h"
 #include "icon_generator_prototype-window.h"
 #include <sys/stat.h>  //for creating temp folder
-#include <ctype.h>
 
 //functional for search_entry and grid_search_view
 GtkGrid   *grid_search_view_temp;
@@ -57,7 +56,7 @@ change_spin_button_x (GtkWidget *widget)
   if(temp_working_element!=0 && new_x != 0)
   {
     free(temp);
-    temp = malloc(temp_size);
+    temp = malloc(temp_size+1);
     GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
     g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
     temp[temp_size] = '\0'; //avoid trash
@@ -128,7 +127,7 @@ change_spin_button_x (GtkWidget *widget)
          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
          temp_size = g_utf8_strlen(temp_buffer,-1);
          free(temp);
-         temp = malloc(temp_size);
+         temp = malloc(temp_size+1);
          memmove(temp,temp_buffer,temp_size);
          g_print("finished working.\n");
       }
@@ -164,30 +163,26 @@ change_spin_button_x (GtkWidget *widget)
     {
       //if transform not-exist -> create
       g_print("transform not exist, started working...\n");
-      g_print("temp[i]:%c",temp[i]); // '>' of <g...
       //move to buffer_start from start to i
       gchar buffer_start[i+1];
       memmove(buffer_start,temp,i);
       buffer_start[i] = '\0';
-      g_print("%s",buffer_start);
       //organise buffer_change
       gchar new_x_char[20];
       sprintf(new_x_char,"%f",new_x);
       gchar new_y_char[20];
       sprintf(new_y_char,"%f",old_y);
       gchar *buffer_change = g_strconcat("\ntransform=\"translate(",new_x_char," ",new_y_char,")\"",NULL);
-      g_print("%s",buffer_change);
       //move to buffer_end from i to end
       int j = temp_size -i;
       gchar buffer_end[i-j+1];
       memmove(buffer_end,temp+i,i-j);
       buffer_end[i-j] = '\0';
-      g_print("%s",buffer_end);
       //concat them in temp
       gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
       temp_size = g_utf8_strlen (temp_buffer,-1);
       free(temp);
-      temp = malloc(temp_size);
+      temp = malloc(temp_size+1);
       memmove(temp,temp_buffer,temp_size);
       g_print("finished working.\n");
     }
@@ -205,18 +200,25 @@ change_spin_button_x (GtkWidget *widget)
 static void
 change_spin_button_y (GtkWidget *widget)
 {
-  g_print("change_spin_button_y!\n");
-  /*
-  gdouble new_y = gtk_spin_button_get_value (spin_button_y);
+    g_print("change_spin_button_x!\n");
+
   gdouble old_x = gtk_spin_button_get_value (spin_button_x);
-                              //!temporary
+  gdouble new_y = gtk_spin_button_get_value (spin_button_y);
+                               //!temporary for avoid sets to
   if(temp_working_element!=0 && new_y != 0)
   {
+    free(temp);
+    temp = malloc(temp_size+1);
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
     sprintf(layer,"%d",temp_working_element);
-    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0]))  )
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == layer[0])) )
     {
       i++;
     }
@@ -258,29 +260,55 @@ change_spin_button_y (GtkWidget *widget)
          g_print("translate is exist, started working...\n");
          //move to buffer_start from start to i
          gchar buffer_start[i+1];
-         memmove(buffer_start,temp,i*sizeof(temp[0]));
+         memmove(buffer_start,temp,i);
          buffer_start[i] = '\0';
          //organise buffer_change
-         gchar new_x_char[10];
+         gchar new_x_char[20];
          sprintf(new_x_char,"%f",old_x);
-         gchar new_y_char[10];
+         gchar new_y_char[20];
          sprintf(new_y_char,"%f",new_y);
-         gchar *buffer_change = g_strconcat(new_x_char," ",new_y_char,NULL);
+         gchar *buffer_change = g_strconcat(new_x_char,"  ",new_y_char,NULL);
          //move to buffer_end from i to end
+         temp_size = g_utf8_strlen(temp,-1);
          for(k=0;temp[i+k]!=')';k++){};
-         gchar buffer_end[temp_size-k+1];
-         memmove(buffer_end,temp+i+k*sizeof(temp[0]),temp_size-k+1);
-         buffer_end[temp_size-k] = '\0';
+         int j = temp_size-i+k;
+         gchar buffer_end[temp_size-j+1];
+         memmove(buffer_end,temp+i+k,temp_size-j);
+         buffer_end[temp_size-j] = '\0';
          //concat them in temp
          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
-         temp_size = g_utf8_strlen (temp_buffer,-1);
-         g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+         temp_size = g_utf8_strlen(temp_buffer,-1);
+         free(temp);
+         temp = malloc(temp_size);
+         memmove(temp,temp_buffer,temp_size);
          g_print("finished working.\n");
       }
       else
       {
+          /*
          //if translate not exist add
-         //!temporary empty need other changes for testing
+          g_print("translate not exist, started working...\n");
+          //move to buffer_start from start to i
+          gchar buffer_start[i+1];
+          memmove(buffer_start,temp,i*sizeof(gchar);
+          buffer_start[i] = '\0';
+          //organise buffer_change
+          gchar new_x_char[10];
+          sprintf(new_x_char,"%f",new_x);
+          gchar new_y_char[10];
+          sprintf(new_y_char,"%f",old_y);
+          gchar *buffer_change = g_strconcat("\ntranslate(",new_x_char," ",new_y_char,")\" ",NULL);
+          //move to buffer_end from i to end
+          int j = temp_size -i;
+          gchar buffer_end[j+1];
+          memmove(buffer_end,temp+i*sizeof(temp[0]),j);
+          buffer_end[j] = '\0';
+          //concat them in temp
+          gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
+          temp_size = g_utf8_strlen (temp_buffer,-1);
+          g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+          g_print("finished working.\n");
+          */
       }
     }
     else
@@ -289,33 +317,36 @@ change_spin_button_y (GtkWidget *widget)
       g_print("transform not exist, started working...\n");
       //move to buffer_start from start to i
       gchar buffer_start[i+1];
-      memmove(buffer_start,temp,i*sizeof(temp[0]));
+      memmove(buffer_start,temp,i);
       buffer_start[i] = '\0';
       //organise buffer_change
-      gchar new_x_char[10];
+      gchar new_x_char[20];
       sprintf(new_x_char,"%f",old_x);
-      gchar new_y_char[10];
+      gchar new_y_char[20];
       sprintf(new_y_char,"%f",new_y);
       gchar *buffer_change = g_strconcat("\ntransform=\"translate(",new_x_char," ",new_y_char,")\"",NULL);
       //move to buffer_end from i to end
       int j = temp_size -i;
-      gchar buffer_end[j+1];
-      memmove(buffer_end,temp+i*sizeof(temp[0]),j);
-      buffer_end[j] = '\0';
+      gchar buffer_end[i-j+1];
+      memmove(buffer_end,temp+i,i-j);
+      buffer_end[i-j] = '\0';
       //concat them in temp
       gchar *temp_buffer = g_strconcat(buffer_start,buffer_change,buffer_end,NULL);
       temp_size = g_utf8_strlen (temp_buffer,-1);
-      g_strlcpy (temp,temp_buffer,temp_size+sizeof(temp[0]));
+      free(temp);
+      temp = malloc(temp_size);
+      memmove(temp,temp_buffer,temp_size);
       g_print("finished working.\n");
     }
-    temp_size+=sizeof(temp[0]);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //rewrite & redraw
     GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
     GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
-    g_output_stream_write (gostream, temp, temp_size, NULL, NULL);
+    g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
     gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
   }
-  */
 }
 static void
 change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
