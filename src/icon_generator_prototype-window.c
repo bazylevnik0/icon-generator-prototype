@@ -57,6 +57,7 @@ change_spin_button_x (GtkWidget *widget)
   {
     free(temp);
     temp = malloc(temp_size+1);
+    temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
     GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
     g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
     temp[temp_size] = '\0'; //avoid trash
@@ -209,6 +210,7 @@ change_spin_button_y (GtkWidget *widget)
   {
     free(temp);
     temp = malloc(temp_size+1);
+    temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
     GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
     g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
     temp[temp_size] = '\0'; //avoid trash
@@ -357,6 +359,14 @@ change_scale_rotate (GtkWidget *widget, GtkAdjustment *data)
                               //!temporary
   if(temp_working_element!=0 && new_angle != 0)
   {
+    free(temp);
+    temp = malloc(temp_size+1);
+    temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
@@ -496,6 +506,14 @@ change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
                               //!temporary
   if(temp_working_element!=0 && new_scale != 1)
   {
+    free(temp);
+    temp = malloc(temp_size+1);
+    temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
+    GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+    g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+    temp[temp_size] = '\0'; //avoid trash
+    temp_size = g_utf8_strlen (temp,-1);
+
     //search in temp id "layer[temp_working_element]"
     int i = 0;
     char layer[2];
@@ -627,10 +645,124 @@ change_scale_scale (GtkWidget *widget, GtkAdjustment *data)
   }
 
 }
+gint draw_grid_is_active = 0;
+gint draw_grid_size;
 static void
 click_button_grid (GtkWidget *widget)
 {
-  g_print("#\n");
+  free(temp);
+  temp = malloc(temp_size+1);
+  temp_file = g_file_new_for_path (g_strconcat(path_library,"/output/temp.svg",NULL));
+  GFileInputStream *temp_istream = g_file_read(temp_file, NULL, NULL);
+  g_input_stream_read(temp_istream, temp, temp_size, NULL, NULL);
+  temp[temp_size] = '\0'; //avoid trash
+  temp_size = g_utf8_strlen (temp,-1);
+
+  g_print("click_button_grid\n");
+  if (draw_grid_is_active == 0)
+  {
+    gchar *draw_grid = g_strconcat("<path\n",
+    "style=\"fill:#666666;stroke:#666666;stroke-width:0.79375;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers\"\n",
+    "d=\"M 1.7711912,30.067721 H 32.344083\"\n",
+    "id=\"grid0\" /><circle\n",
+    "style=\"fill:none;stroke:#666666;stroke-width:0.264583;stroke-linejoin:bevel;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers\"\n",
+    "id=\"path1236\"\n",
+    "cx=\"16.924891\"\n",
+    "cy=\"17.336052\"\n",
+    "r=\"14.199356\" /><rect\n",
+    "style=\"fill:none;stroke:#666666;stroke-width:0.264583;stroke-linejoin:bevel;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers\"\n",
+    "id=\"grid1\"\n",
+    "width=\"26.870527\"\n",
+    "height=\"20.870285\"\n",
+    "x=\"3.3811626\"\n",
+    "y=\"8.7303438\"\n",
+    "ry=\"1.6614037\" /><rect\n",
+    "style=\"fill:none;stroke:#666666;stroke-width:0.264583;stroke-linejoin:bevel;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers\"\n",
+    "id=\"grid2\"\n",
+    "width=\"26.870527\"\n",
+    "height=\"20.870285\"\n",
+    "x=\"3.4561989\"\n",
+    "y=\"-27.511631\"\n",
+    "ry=\"1.6614037\"\n",
+    "transform=\"rotate(90)\" /><rect\n",
+    "style=\"fill:none;stroke:#666666;stroke-width:0.264583;stroke-linejoin:bevel;stroke-dasharray:0.264583, 0.264583;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers\"\n",
+    "id=\"grid3\"\n",
+    "width=\"25.116899\"\n",
+    "height=\"24.636707\"\n",
+    "x=\"4.6634398\"\n",
+    "y=\"-29.343847\"\n",
+    "ry=\"1.9612342\"\n",
+    "transform=\"rotate(90)\" />\n"
+    ,NULL);
+    draw_grid_size = g_utf8_strlen (draw_grid,-1);
+    //add grid to layer1
+    int i = 0;
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == '1'))  )
+    {
+      i++;
+    }
+    i++;
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == '1'))  )
+    {
+      i++;
+    }
+    i+=9;
+
+    //move to buffer_start from start to i
+    gchar buffer_start[i+1];
+    memmove(buffer_start,temp,i);
+    buffer_start[i] = '\0';
+    //move to buffer_end from i to end
+    int j = temp_size -i;
+    gchar buffer_end[i-j+1];
+    memmove(buffer_end,temp+i,i-j);
+    buffer_end[j] = '\0';
+    //concat them in temp
+    gchar *temp_buffer = g_strconcat(buffer_start,draw_grid,buffer_end,NULL);
+    temp_size = g_utf8_strlen (temp_buffer,-1);
+    free(temp);
+    temp = malloc(temp_size+1);
+    memmove(temp,temp_buffer,temp_size);
+
+    draw_grid_is_active = 1;
+  } else {
+    //remove grid from layer1
+    int i = 0;
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == '1'))  )
+    {
+      i++;
+    }
+    i++;
+    while ( !((temp[i] =='l') && (temp[i+1] == 'a') && (temp[i+2] =='y') && (temp[i+3] == 'e') && (temp[i+4] == 'r') && (temp[i+5] == '1'))  )
+    {
+      i++;
+    }
+    i+=9;
+
+    //move to buffer_start from start to i
+    gchar buffer_start[i+1];
+    memmove(buffer_start,temp,i);
+    buffer_start[i] = '\0';
+    //move to buffer_end from i to end
+    gchar buffer_end[temp_size - i + draw_grid_size+1];
+    memmove(buffer_end,temp+i+draw_grid_size,temp_size - i + draw_grid_size);
+    buffer_end[temp_size - i + draw_grid_size] = '\0';
+    //concat them in temp
+    gchar *temp_buffer = g_strconcat(buffer_start,buffer_end,NULL);
+    temp_size = g_utf8_strlen (temp_buffer,-1);
+    free(temp);
+    temp = malloc(temp_size+1);
+    memmove(temp,temp_buffer,temp_size);
+    g_print("%s",temp);
+    draw_grid_is_active = 0;
+  }
+  temp[temp_size] = '\0'; //avoid trash
+  temp_size = g_utf8_strlen (temp,-1);
+  //rewrite & redraw
+  GFileIOStream *gfiostream = g_file_open_readwrite(temp_file,NULL,NULL);
+  GOutputStream *gostream = g_io_stream_get_output_stream (gfiostream);
+  g_output_stream_write (gostream, temp, temp_size+1, NULL, NULL);
+  gtk_image_set_from_file (draw_image, g_strconcat(path_library,"/output/temp.svg",NULL));
 }
 
 static void
