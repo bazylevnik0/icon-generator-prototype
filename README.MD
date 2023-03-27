@@ -1,5 +1,5 @@
 it is prototype version<br>
-plz write me if you handle problemsn<br>
+plz write me if you handle problems<br>
 *in my pc it is also with problems but... lets check together:<br>
 
 this app works with svg's like a with text files<br>
