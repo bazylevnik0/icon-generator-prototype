@@ -26,5 +26,5 @@ test with lib(1% must work - in my pc not working, looks strange plz try it on y
 -create issue with attachment result file(/Pictures/output/temp.svg)<br>
 -run app again<br>
 
-
+<img src="https://bazylevnik0.github.io/out/generator.png"></img>
 
