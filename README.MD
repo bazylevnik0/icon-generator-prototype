@@ -6,7 +6,7 @@ this app works with svg's like a with text files<br>
 it is building and testing through GNOME builder<br>
 
 testing steps:<br>
--clone repositoryn<br>
+-clone repository<br>
 
 test with test lib(99% must work):<br>
 -copy files(pictures) from /libtest(in source of prototype) to /Pictures<br>
